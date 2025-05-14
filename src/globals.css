@@ -1,9 +1,6 @@
 @layer theme, base, mui, components, utilities;
 @import 'tailwindcss';
 
-@layer theme, base, mui, components, utilities;
-@import 'tailwindcss';
-
 @theme inline {
   /* Material UI typography */
   --font-h1: var(--mui-font-h1);
@@ -73,7 +70,10 @@
 
   /*MY Colors*/
   --color-blue: #3392EA;
-
+  --color-mytext: #000000;
+  --color-loginbackground: #FFFFFF;
+  --color-grey-text:#00000099;
+  --color-grey-line: #0000001F;
 
   /* Material UI text & common colors */
   --color-text-primary: rgb(var(--mui-palette-text-primaryChannel));

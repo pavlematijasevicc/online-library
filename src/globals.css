@@ -1,9 +1,6 @@
 @layer theme, base, mui, components, utilities;
 @import 'tailwindcss';
 
-@layer theme, base, mui, components, utilities;
-@import 'tailwindcss';
-
 @theme inline {
   /* Material UI typography */
   --font-h1: var(--mui-font-h1);

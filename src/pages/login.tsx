@@ -3,9 +3,9 @@ import { Button, TextField } from "@mui/material";
 import Image from "next/image";
 import loginImage from "../../public/login.jpg";
 import { useState } from "react";
-import { checkEmail, checkPassword } from "../app/src/utiles/utiles";
+import { checkEmail, checkPassword } from "../utils/utiles";
 
-export default function Home() {
+export default function Login() {
   const year: number = new Date().getFullYear();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");

@@ -14,7 +14,7 @@ export function checkEmail(email: string): string | null {
   const validDomainPart = hasDotAfterAt && email.split("@")[1].split(".")[0]?.length > 0;
   const validTld = hasDotAfterAt && email.split("@")[1].split(".")[1]?.length > 0;
 
-  
+
 
   if (!hasAtSymbol) errors.push("nedostaje znak '@'");
   if (!validLocalPart) errors.push("nedostaje dio prije '@'");

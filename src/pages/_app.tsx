@@ -21,7 +21,7 @@ const roboto = Roboto({
   variable: "--font-roboto",
 });
 
-// Create emotion cache for SSR
+// Create emotion cache for SSR3002
 const clientCache = createEmotionCache({ enableCssLayer: true });
 
 // Extend AppProps with emotionCache

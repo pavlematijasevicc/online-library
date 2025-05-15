@@ -17,7 +17,7 @@ async function login(data: logInData) {
         const res = await api.post('/login', data)
         // Sacuvaj token u localStorage
         if(res.data.access_token){
-            localStorage.setItem('accessToken',res.data.access_token);
+         localStorage.setItem('access_token',res.data.access_token);
         }
         return res.data;
     } catch(error: any) {

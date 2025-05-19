@@ -67,7 +67,7 @@ export default function Login() {
             className="bg-blue w-full mb-4 font-medium text-sm p-3 uppercase"
             onClick={handleLogin}
           >
-            LOG IN
+            log in
           </Button>
         </form>
         <Button variant="text" className="text-blue p-2 capitalize mb-4 block">

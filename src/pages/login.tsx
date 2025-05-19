@@ -1,9 +1,11 @@
 "use client";
+import { get, login } from "@/utils/apiService";
 import { Button, TextField } from "@mui/material";
 import Image from "next/image";
 import loginImage from "../../public/login.jpg";
 import { useState } from "react";
 import { checkEmail, checkPassword } from "../utils/utiles";
+import { useRouter } from "next/router";
 
 export default function Login() {
   const year: number = new Date().getFullYear();
@@ -12,15 +14,37 @@ export default function Login() {
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>("");
+  const router = useRouter();
 
-  function handleLogin() {
+  async function handleLogin() {
     setSubmitted(true);
     const error = checkEmail(email);
     setEmailError(error);
     const pError = checkPassword(password);
     setPasswordError(pError);
-    if (!error) {
-      // Nastavi sa slanjem forme
+    if (!error && !pError) {
+      try {
+        const data = {
+          email,
+          password,
+        };
+        const res = await login(data);
+        console.log(res);
+        if (res === "Invalid email or password") {
+          setErrorMessage("Pogresan email ili password!");
+        }
+
+        //Ako je logovanje uspjesno preusmjeri korisnika:
+        if (res && res.access_token) {
+          //preusmjeri na glavnu stranicu
+          router.push("/");
+        }
+      } catch (err: any) {
+        setErrorMessage(err.message || "Greška pri logovanju");
+        console.error("Login failed", err);
+        console.log(errorMessage);
+      }
     }
   }
 
@@ -42,10 +66,11 @@ export default function Login() {
             placeholder="example@example.net"
             onChange={(e) => {
               setEmail(e.target.value);
+              setErrorMessage("");
               const error = checkEmail(e.target.value);
               setEmailError(error);
             }}
-            error={submitted && !!emailError}
+            error={submitted && (!!emailError || errorMessage != "")}
             helperText={submitted && emailError ? emailError : ""}
           />
           <TextField
@@ -55,13 +80,17 @@ export default function Login() {
             label="Password"
             placeholder="Enter password"
             onChange={(e) => {
+              setErrorMessage("");
               setPassword(e.target.value);
               const error = checkPassword(e.target.value);
               setPasswordError(error);
             }}
-            error={submitted && !!passwordError}
+            error={submitted && (!!passwordError || errorMessage != "")}
             helperText={submitted && passwordError ? passwordError : ""}
           />
+          {errorMessage && (
+            <div className="text-red-600 mb-4 -mt-2">{errorMessage}</div>
+          )}
           <Button
             variant="contained"
             className="bg-blue w-full mb-4 font-medium text-sm p-3 uppercase"

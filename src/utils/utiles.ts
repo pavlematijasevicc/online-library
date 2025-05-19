@@ -3,25 +3,13 @@ export function checkEmail(email: string): string | null {
   const errors = [];
     if (email.length === 0) 
         {
-            errors.push('Unijeli ste prazan email!!!');
-            return  `${errors}`
+            return 'Unijeli ste prazan email!!!';
         }
-    
-
-  const hasAtSymbol = email.includes("@");
-  const hasDotAfterAt = hasAtSymbol && email.split("@")[1]?.includes(".");
-  const validLocalPart = email.split("@")[0]?.length > 0;
-  const validDomainPart = hasDotAfterAt && email.split("@")[1].split(".")[0]?.length > 0;
-  const validTld = hasDotAfterAt && email.split("@")[1].split(".")[1]?.length > 0;
-
-
-
-  if (!hasAtSymbol) errors.push("nedostaje znak '@'");
-  if (!validLocalPart) errors.push("nedostaje dio prije '@'");
-  if (!validDomainPart) errors.push("nedostaje dio između '@' i '.'");
-  if (!validTld) errors.push("nedostaje završetak poput '.com'");
-
-  return errors.length > 0 ? `Neispravan email: ${errors.join(", ")}.` : null;
+        const emailRegex = /^[^\s@]+@[^\s@]+.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+        return "Email nije u ispravnom formatu.";
+} else
+return ""
 }
 
 
@@ -45,6 +33,9 @@ export function checkPassword(password: string): string | null {
   }
   if (!/[\W_]/.test(password)) {
     errors.push("lozinka mora sadržati najmanje jedan specijalni karakter");
+  }
+  if (!/[0-9]/.test(password)) {
+    errors.push("lozinka mora sadržati najmanje jedan broj");
   }
 
   return errors.length > 0 ? `Neispravan password: ${errors.join(", ")}.` : null;

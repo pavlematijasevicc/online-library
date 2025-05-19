@@ -64,7 +64,7 @@ export default function Login() {
           />
           <Button
             variant="contained"
-            className="bg-blue w-full mb-4 font-medium text-sm p-3"
+            className="bg-blue w-full mb-4 font-medium text-sm p-3 uppercase"
             onClick={handleLogin}
           >
             LOG IN

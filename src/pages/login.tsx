@@ -6,8 +6,10 @@ import loginImage from "../../public/login.jpg";
 import { useState } from "react";
 import { checkEmail, checkPassword } from "../utils/utiles";
 import { useRouter } from "next/router";
+import AuthLayout from "@/components/AuthLayout";
+import type { NextPageWithLayout } from "./_app";
 
-export default function Login() {
+const Login: NextPageWithLayout = () => {
   const year: number = new Date().getFullYear();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -108,4 +110,10 @@ export default function Login() {
       </div>
     </div>
   );
-}
+};
+
+Login.getLayout = function getLayout(page) {
+  return <AuthLayout>{page}</AuthLayout>;
+};
+
+export default Login;

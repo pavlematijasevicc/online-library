@@ -4,6 +4,7 @@ import withAuth from "../components/withAuth";
 import Navbar from "@/components/Navbar";
 import SideMenu from "@/components/SideMenu";
 import Link from "next/link";
+import { Button } from "@mui/material";
 
 function Home() {
   function handleLogin() {
@@ -12,9 +13,9 @@ function Home() {
 
   return (
     <Link href={"/login"}>
-      <button className="hover:cursor-pointer" onClick={() => handleLogin()}>
+      <Button className="hover:cursor-pointer" onClick={() => handleLogin()}>
         Log out
-      </button>
+      </Button>
     </Link>
   );
 }

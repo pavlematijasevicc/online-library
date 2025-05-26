@@ -1,4 +1,3 @@
-import Image from "next/image";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import GroupsIcon from "@mui/icons-material/Groups";
 import PersonIcon from "@mui/icons-material/Person";
@@ -9,7 +8,6 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import CloseIcon from "@mui/icons-material/Close";
 import MenuIcon from "@mui/icons-material/Menu";
 import { usePathname } from "next/navigation";
-import clsx from "clsx";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
@@ -58,7 +56,6 @@ export default function SideMenu() {
           <ListItem
             key={"menu"}
             disablePadding
-            className="hover:cursor-pointer"
             onClick={() => setDrawerOpen((prev) => !prev)}
           >
             <ListItemButton>
@@ -75,7 +72,7 @@ export default function SideMenu() {
               <ListItem
                 key={"dashboard"}
                 disablePadding
-                className="hover:cursor-pointer bg-active text-blue"
+                className="bg-active text-blue"
               >
                 <ListItemButton>
                   <ListItemIcon>
@@ -93,11 +90,7 @@ export default function SideMenu() {
                 </ListItemButton>
               </ListItem>
             ) : (
-              <ListItem
-                key={"dashboard"}
-                disablePadding
-                className="hover:cursor-pointer"
-              >
+              <ListItem key={"dashboard"} disablePadding>
                 <ListItemButton>
                   <ListItemIcon>
                     {activeItem === "/" ? (
@@ -120,7 +113,7 @@ export default function SideMenu() {
               <ListItem
                 key={"librarians"}
                 disablePadding
-                className="hover:cursor-pointer bg-active text-blue "
+                className=" bg-active text-blue "
               >
                 <ListItemButton>
                   <ListItemIcon>
@@ -136,11 +129,7 @@ export default function SideMenu() {
                 </ListItemButton>
               </ListItem>
             ) : (
-              <ListItem
-                key={"librarians"}
-                disablePadding
-                className="hover:cursor-pointer"
-              >
+              <ListItem key={"librarians"} disablePadding>
                 <ListItemButton>
                   <ListItemIcon>
                     <PersonIcon
@@ -161,7 +150,7 @@ export default function SideMenu() {
               <ListItem
                 key={"students"}
                 disablePadding
-                className="hover:cursor-pointer bg-active text-blue"
+                className=" bg-active text-blue"
               >
                 <ListItemButton>
                   <ListItemIcon>
@@ -177,11 +166,7 @@ export default function SideMenu() {
                 </ListItemButton>
               </ListItem>
             ) : (
-              <ListItem
-                key={"students"}
-                disablePadding
-                className="hover:cursor-pointer"
-              >
+              <ListItem key={"students"} disablePadding>
                 <ListItemButton>
                   <ListItemIcon>
                     <GroupsIcon
@@ -202,7 +187,7 @@ export default function SideMenu() {
               <ListItem
                 key={"books"}
                 disablePadding
-                className="hover:cursor-pointer bg-active text-blue"
+                className=" bg-active text-blue"
               >
                 <ListItemButton>
                   <ListItemIcon>
@@ -216,11 +201,7 @@ export default function SideMenu() {
                 </ListItemButton>
               </ListItem>
             ) : (
-              <ListItem
-                key={"books"}
-                disablePadding
-                className="hover:cursor-pointer"
-              >
+              <ListItem key={"books"} disablePadding>
                 <ListItemButton>
                   <ListItemIcon>
                     <MenuBookIcon
@@ -239,7 +220,7 @@ export default function SideMenu() {
               <ListItem
                 key={"authors"}
                 disablePadding
-                className="hover:cursor-pointer bg-active text-blue"
+                className=" bg-active text-blue"
               >
                 <ListItemButton>
                   <ListItemIcon>
@@ -255,11 +236,7 @@ export default function SideMenu() {
                 </ListItemButton>
               </ListItem>
             ) : (
-              <ListItem
-                key={"autorhs"}
-                disablePadding
-                className="hover:cursor-pointer"
-              >
+              <ListItem key={"autorhs"} disablePadding>
                 <ListItemButton>
                   <ListItemIcon>
                     <ClassOutlinedIcon
@@ -281,7 +258,7 @@ export default function SideMenu() {
               <ListItem
                 key={"publication"}
                 disablePadding
-                className="hover:cursor-pointer mb-120 bg-active text-blue"
+                className=" mb-120 bg-active text-blue"
               >
                 <ListItemButton>
                   <ListItemIcon>
@@ -297,11 +274,7 @@ export default function SideMenu() {
                 </ListItemButton>
               </ListItem>
             ) : (
-              <ListItem
-                key={"publication"}
-                disablePadding
-                className="hover:cursor-pointer mb-115"
-              >
+              <ListItem key={"publication"} disablePadding className="mb-115">
                 <ListItemButton>
                   <ListItemIcon>
                     <SwapHorizIcon
@@ -323,7 +296,7 @@ export default function SideMenu() {
               <ListItem
                 key={"settings"}
                 disablePadding
-                className="hover:cursor-pointer text-blue bg-active"
+                className=" text-blue bg-active"
               >
                 <ListItemButton>
                   <ListItemIcon>
@@ -339,11 +312,7 @@ export default function SideMenu() {
                 </ListItemButton>
               </ListItem>
             ) : (
-              <ListItem
-                key={"settings"}
-                disablePadding
-                className="hover:cursor-pointer"
-              >
+              <ListItem key={"settings"} disablePadding>
                 <ListItemButton>
                   <ListItemIcon>
                     <SettingsIcon

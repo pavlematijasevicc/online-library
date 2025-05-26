@@ -1,6 +1,6 @@
 import Navbar from "@/components/Navbar";
 import SideMenu from "@/components/SideMenu";
 
-export default function Autori() {
+export default function Authors() {
   return <></>;
 }

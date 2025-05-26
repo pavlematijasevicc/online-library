@@ -12,8 +12,21 @@ import { Roboto } from "next/font/google";
 import "@/globals.css";
 import { EmotionCache } from "@emotion/cache";
 import theme from "./theme";
+import Layout from "@/components/Layout";
+import type { ReactElement, ReactNode } from "react";
+import type { NextPage } from "next";
 
-// Load Roboto font
+// ✅ Type extensions to support getLayout
+export type NextPageWithLayout = NextPage & {
+  getLayout?: (page: ReactElement) => ReactNode;
+};
+
+type AppPropsWithLayout = AppProps & {
+  Component: NextPageWithLayout;
+  emotionCache?: EmotionCache;
+};
+
+// ✅ Load Roboto font
 const roboto = Roboto({
   weight: ["300", "400", "500", "700"],
   subsets: ["latin"],
@@ -21,19 +34,17 @@ const roboto = Roboto({
   variable: "--font-roboto",
 });
 
-// Create emotion cache for SSR3002
+// ✅ Emotion cache for SSR
 const clientCache = createEmotionCache({ enableCssLayer: true });
-
-// Extend AppProps with emotionCache
-interface MyAppProps extends AppProps {
-  emotionCache?: EmotionCache;
-}
 
 export default function MyApp({
   Component,
   pageProps,
   emotionCache = clientCache,
-}: MyAppProps) {
+}: AppPropsWithLayout) {
+  // ✅ Use getLayout if defined, else use default layout
+  const getLayout = Component.getLayout ?? ((page) => <Layout>{page}</Layout>);
+
   return (
     <AppCacheProvider emotionCache={emotionCache}>
       <GlobalStyles styles="@layer theme, base, mui, components, utilities;" />
@@ -44,7 +55,7 @@ export default function MyApp({
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <main className={roboto.variable}>
-          <Component {...pageProps} />
+          {getLayout(<Component {...pageProps} />)}
         </main>
       </ThemeProvider>
     </AppCacheProvider>

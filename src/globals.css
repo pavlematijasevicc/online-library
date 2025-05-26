@@ -74,6 +74,8 @@
   --color-loginbackground: #FFFFFF;
   --color-grey-text:#00000099;
   --color-grey-line: #0000001F;
+  --color-grey-menu: #F5F7FA;
+  --color-active:#3392EA33;
 
   /* Material UI text & common colors */
   --color-text-primary: rgb(var(--mui-palette-text-primaryChannel));

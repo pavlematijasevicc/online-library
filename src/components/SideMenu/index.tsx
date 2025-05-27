@@ -39,7 +39,7 @@ export default function SideMenu() {
             borderRadius: "0",
             overflow: "hidden",
             width: drawerOpen ? 273 : 56,
-            height: 890,
+            height: "calc(100vh - 72px)",
             justifyContent: "space-between",
             boxSizing: "border-box",
             transition: "width 0.3s",
@@ -65,7 +65,7 @@ export default function SideMenu() {
             </ListItemButton>
           </ListItem>
         </List>
-        <Divider />
+        {drawerOpen ? <Divider className="-mt-6" /> : <Divider />}
         <List>
           <Link href={"/"}>
             {activeItem === "/" ? (

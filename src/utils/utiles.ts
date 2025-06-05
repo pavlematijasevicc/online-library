@@ -41,3 +41,27 @@ export function checkPassword(password: string): string | null {
   return errors.length > 0 ? `Neispravan password: ${errors.join(", ")}.` : null;
 }
 
+export function checkIme(ime: string): string | null {
+  const errors: string[] = [];
+
+  if (ime.length === 0) 
+        {
+            errors.push('Morate unijeti Ime!');
+            return  `${errors}`
+        }
+
+  return null;
+}
+
+
+export function checkPrezime(prezime: string): string | null {
+  const errors: string[] = [];
+
+  if (prezime.length === 0) 
+        {
+            errors.push('Morate unijeti Prezime!');
+            return  `${errors}`
+        }
+
+  return null;
+}

@@ -76,6 +76,9 @@
   --color-grey-line: #0000001F;
   --color-grey-menu: #F5F7FA;
   --color-active:#3392EA33;
+  --color-mygrey:#F4F5F7;
+  --color-inputB: #00000033;
+
 
   /* Material UI text & common colors */
   --color-text-primary: rgb(var(--mui-palette-text-primaryChannel));

@@ -1,4 +1,4 @@
-import { ApiResponse, logInData } from "../../types";
+import { ApiResponse, logInData, NewAuthorData } from "../../types";
 import api from "./axios";
 
 export const get = async(
@@ -27,6 +27,44 @@ async function login(data: logInData) {
     }
 }
 
+export const createAuthor = async (data: FormData) => {
+    try {
+        const response = await api.post('/authors/create', data, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        return response.data;
+      } catch (error: any) {
+        console.error('Error creating author:', error);
+        throw error;
+      }
+    };
+    
+export const fetchAllAuthors = async (perPage = 20) => {
+  try {
+        const response = await api.get('/authors', {
+        params: { per_page: perPage }
+        });
+        return response.data;
+      } catch (error: any) {
+        console.error('Error fetching authors:', error);
+        throw error;
+      }
+    };
+
+export const fetchAuthorById = async (authorId: number) => {
+      try {
+        const response = await api.get(`/authors/${authorId}`);
+        //console.log("podaci:",response)
+        return response.data;
+      } catch (error: any) {
+        console.error(`Error fetching author with ID ${authorId}:`, error);
+        throw error;
+      }
+};
+    
+
 export {
-    login
+    login,
 }

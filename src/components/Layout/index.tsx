@@ -14,7 +14,7 @@ export default function Layout({ children }) {
       <main className="row-start-2 col-start-2">{children}</main>
       <div
         className="absolute left-0 right-0 h-[1px] bg-grey-line -z-50"
-        style={{ top: '140px' }}
+        style={{ top: '142px' }}
       />
     </div>
   )

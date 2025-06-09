@@ -67,7 +67,7 @@ export default function SideMenu() {
             </ListItemButton>
           </ListItem>
         </List>
-        {drawerOpen ? <Divider className="-mt-5" /> : <Divider />}
+        {drawerOpen ? <Divider className="-mt-6" /> : <Divider />}
         <List>
           <Link href={'/'}>
             {activeItem === '/' ? (

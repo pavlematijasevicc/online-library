@@ -17,8 +17,12 @@ export interface NewAuthorData {
 
   export interface Author {
     id: number;
-    firstName: string;
-    lastName: string;
+    first_name: string;
+    last_name: string;
     biography?: string;
     picture?: string | null; 
   }
+  
+  export type FetchAuthorResponse = {
+    author: Author;
+  };

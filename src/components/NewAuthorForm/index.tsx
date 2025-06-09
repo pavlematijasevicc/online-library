@@ -12,32 +12,39 @@ import PhotoIcon from '@mui/icons-material/Photo'
 import { checkIme } from '@/utils/utiles'
 import { checkPrezime } from '@/utils/utiles'
 import { createAuthor } from '@/utils/apiService'
+import Alert from '@mui/material/Alert'
 
 export default function AuthorForm() {
-  const [ime, setIme] = useState('')
-  const [prezime, setPrezime] = useState('')
-  const [opis, setOpis] = useState('')
+  const [name, setName] = useState('')
+  const [surname, setSurname] = useState('')
+  const [description, setDescription] = useState('')
   const [errorMessage, setErrorMessage] = useState<string | null>('')
-  const [ImeGreska, setImeGreska] = useState<string | null>(null)
-  const [PrezimeGreska, setPrezimeGreska] = useState<string | null>(null)
+  const [nameError, setNameError] = useState<string | null>(null)
+  const [surnameError, setSurnameError] = useState<string | null>(null)
   const [submitted, setSubmitted] = useState<boolean>(false)
   const [image, setImage] = useState<File | null>(null)
+  const [showAlert, setShowAlert] = useState(false)
+
+  function handleAlert() {
+    console.log('usao u alert')
+    setShowAlert(true)
+  }
 
   async function handleCreateAuthor(e: React.FormEvent) {
     e.preventDefault()
     setSubmitted(true)
 
-    const imeError = checkIme(ime)
-    const prezimeError = checkPrezime(prezime)
+    const nameError2 = checkIme(name)
+    const surnameError2 = checkPrezime(surname)
 
-    setImeGreska(imeError)
-    setPrezimeGreska(prezimeError)
+    setNameError(nameError2)
+    setSurnameError(surnameError2)
 
-    if (!imeError && !prezimeError) {
+    if (!nameError2 && !surnameError2) {
       const formData = new FormData()
-      formData.append('first_name', ime)
-      formData.append('last_name', prezime)
-      formData.append('biography', opis)
+      formData.append('first_name', name)
+      formData.append('last_name', surname)
+      formData.append('biography', description)
       if (image) {
         formData.append('picture', image) // <- pravi fajl
       }
@@ -45,7 +52,7 @@ export default function AuthorForm() {
       try {
         const response = await createAuthor(formData)
         console.log('Author created:', response)
-        // success
+        handleAlert()
       } catch (error) {
         console.error('Error submitting form:', error)
         // show error
@@ -62,9 +69,11 @@ export default function AuthorForm() {
 
   function deleteFields(e: React.FormEvent) {
     e.preventDefault()
-    setIme('')
-    setPrezime('')
-    setOpis('')
+    setName('')
+    setSurname('')
+    setDescription('')
+    setNameError(null)
+    setSurnameError(null)
     setImage(null)
   }
 
@@ -115,16 +124,16 @@ export default function AuthorForm() {
       <TextField
         label="Unesite Ime.."
         variant="outlined"
-        value={ime}
+        value={name}
         onChange={(e) => {
           setErrorMessage('')
-          setIme(e.target.value)
+          setName(e.target.value)
           const error = checkIme(e.target.value)
-          setImeGreska(error)
+          setNameError(error)
         }}
         sx={{ width: 720 }}
-        error={submitted && (!!ImeGreska || errorMessage != '')}
-        helperText={submitted && ImeGreska ? ImeGreska : ''}
+        error={submitted && (!!nameError || errorMessage != '')}
+        helperText={submitted && nameError ? nameError : ''}
       />
       {errorMessage && (
         <div className="text-red-600 mb-4 -mt-2">{errorMessage}</div>
@@ -132,22 +141,22 @@ export default function AuthorForm() {
       <TextField
         label="Unesite Prezime.."
         variant="outlined"
-        value={prezime}
+        value={surname}
         onChange={(e) => {
           setErrorMessage('')
-          setPrezime(e.target.value)
+          setSurname(e.target.value)
           const error = checkPrezime(e.target.value)
-          setPrezimeGreska(error)
+          setSurnameError(error)
         }}
         sx={{ width: 720 }}
-        error={submitted && (!!PrezimeGreska || errorMessage != '')}
-        helperText={submitted && PrezimeGreska ? PrezimeGreska : ''}
+        error={submitted && (!!surnameError || errorMessage != '')}
+        helperText={submitted && surnameError ? surnameError : ''}
       />
       <TextField
         label="Unesite Opis.."
         variant="outlined"
-        value={opis}
-        onChange={(e) => setOpis(e.target.value)}
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
         sx={{ width: 724 }}
         InputProps={{
           sx: { height: 212 },
@@ -172,6 +181,16 @@ export default function AuthorForm() {
           Ponisti
         </Button>
       </Box>
+      {showAlert && (
+        <Alert
+          className="mt-4"
+          severity="success"
+          onClose={() => setShowAlert(false)}
+          variant="filled"
+        >
+          Autor uspjesno kreiran!
+        </Alert>
+      )}
     </Box>
   )
 }

@@ -21,29 +21,17 @@ import { visuallyHidden } from '@mui/utils'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { fetchAllAuthors } from '@/utils/apiService'
 import Link from 'next/link'
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
+import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined'
+import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
+import { Author } from '../../../types'
+import CircularProgress from '@mui/material/CircularProgress'
 
 interface Data {
   id: number
   image: string
   name: string
-  opis: string
-  protein: number
-}
-
-function createData(
-  id: number,
-  image: string,
-  name: string,
-  opis: string,
-  protein: number
-): Data {
-  return {
-    id,
-    image,
-    name,
-    opis,
-    protein,
-  }
+  description: string
 }
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
@@ -85,16 +73,10 @@ const headCells: readonly HeadCell[] = [
     label: 'Naziv Autora',
   },
   {
-    id: 'opis',
+    id: 'description',
     numeric: false,
     disablePadding: true,
     label: 'Opis',
-  },
-  {
-    id: 'protein',
-    numeric: true,
-    disablePadding: false,
-    label: '',
   },
 ]
 
@@ -126,15 +108,12 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 
   return (
     <TableHead sx={{ backgroundColor: '#F5F7FA' }}>
-      <TableRow sx={{ backgroundColor: '#F5F7FA' }}>
+      <TableRow>
         <TableCell padding="checkbox">
           <Checkbox
             indeterminate={numSelected > 0 && numSelected < rowCount}
             checked={rowCount > 0 && numSelected === rowCount}
             onChange={onSelectAllClick}
-            inputProps={{
-              'aria-label': 'select all desserts',
-            }}
           />
         </TableCell>
         {headCells.map((headCell) => (
@@ -143,7 +122,9 @@ function EnhancedTableHead(props: EnhancedTableProps) {
             align={headCell.numeric ? 'right' : 'left'}
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
-            sx={{ fontWeight: headCell.id === 'opis' ? 'normal' : 'bold' }} // 👈 dodato ovde
+            sx={{
+              fontWeight: headCell.id === 'description' ? 'normal' : 'bold',
+            }}
           >
             <TableSortLabel
               active={orderBy === headCell.id}
@@ -159,6 +140,9 @@ function EnhancedTableHead(props: EnhancedTableProps) {
             </TableSortLabel>
           </TableCell>
         ))}
+        <TableCell align="right" padding="normal">
+          {/* prazno zaglavlje za dugme */}
+        </TableCell>
       </TableRow>
     </TableHead>
   )
@@ -166,6 +150,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 interface EnhancedTableToolbarProps {
   numSelected: number
 }
+
 function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
   const { numSelected } = props
   return numSelected > 0 ? (
@@ -175,7 +160,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           pl: { sm: 2 },
           pr: { xs: 1, sm: 1 },
         },
-        numSelected > 0 && {
+        {
           bgcolor: (theme) =>
             alpha(
               theme.palette.primary.main,
@@ -184,39 +169,46 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
         },
       ]}
     >
-      {numSelected > 0 && (
-        <Typography
-          sx={{ flex: '1 1 100%' }}
-          color="inherit"
-          variant="subtitle1"
-          component="div"
-        >
-          Izbrisi {numSelected} autora
-        </Typography>
-      )}
-      {numSelected > 0 && (
-        <Tooltip title="Izbrisi">
-          <IconButton>
-            <DeleteIcon />
-          </IconButton>
-        </Tooltip>
-      )}
+      <Typography
+        sx={{ flex: '1 1 100%' }}
+        color="inherit"
+        variant="subtitle1"
+        component="div"
+      >
+        Izbrisi {numSelected} autora
+      </Typography>
+
+      <Tooltip title="Izbrisi">
+        <IconButton>
+          <DeleteIcon />
+        </IconButton>
+      </Tooltip>
     </Toolbar>
   ) : null
 }
 export default function EnhancedTable() {
   const [order, setOrder] = React.useState<Order>('asc')
-  const [orderBy, setOrderBy] = React.useState<keyof Data>('opis')
+  const [orderBy, setOrderBy] = React.useState<keyof Data>('description')
   const [selected, setSelected] = React.useState<readonly number[]>([])
   const [page, setPage] = React.useState(0)
   const [rowsPerPage, setRowsPerPage] = React.useState(5)
-  const [data, setData] = useState<any[]>([])
+  const [data, setData] = useState<Author[]>([])
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [openMenu, setOpenMenu] = useState<number | null>(null)
 
   useEffect(() => {
     const loadAuthors = async () => {
-      const authors = await fetchAllAuthors(20) // ili bez parametra
-      console.log(authors)
-      setData(authors.data.data)
+      setLoading(true)
+      try {
+        const authors = await fetchAllAuthors(20)
+        setData(authors.data.data)
+      } catch (error) {
+        console.error('Greška prilikom učitavanja autora:', error)
+        setError('Nije moguće učitati autore. Pokušajte ponovo kasnije.')
+      } finally {
+        setLoading(false)
+      }
     }
 
     loadAuthors()
@@ -224,15 +216,20 @@ export default function EnhancedTable() {
 
   console.log('Data:', data)
 
-  let rows = data.map((author) =>
-    createData(
-      author.id,
-      author.picture ? `http://localhost/${author.picture}` : '',
-      `${author.first_name} ${author.last_name}`,
-      author.biography || 'Nema opisa',
-      0
-    )
-  )
+  function toggleMenu(id: number | null) {
+    setOpenMenu(id)
+  }
+
+  function closeMenu() {
+    setOpenMenu(null)
+  }
+
+  let rows = data.map((author) => ({
+    id: author.id,
+    image: author.picture ? `http://localhost/${author.picture}` : '',
+    name: `${author.first_name} ${author.last_name}`,
+    description: author.biography || 'Nema opisa',
+  }))
 
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
@@ -252,7 +249,10 @@ export default function EnhancedTable() {
     setSelected([])
   }
 
-  const handleClick = (event: React.MouseEvent<unknown>, id: number) => {
+  const handleClick = (
+    event: React.ChangeEvent<HTMLInputElement>,
+    id: number
+  ) => {
     const selectedIndex = selected.indexOf(id)
     let newSelected: readonly number[] = []
 
@@ -294,105 +294,156 @@ export default function EnhancedTable() {
     [order, orderBy, page, rowsPerPage, rows]
   )
 
-  return (
-    <Box sx={{ width: '100%' }}>
-      <Paper sx={{ width: '100%', mb: 2 }}>
-        <EnhancedTableToolbar numSelected={selected.length} />
-        <TableContainer>
-          <Table
-            sx={{ minWidth: 750 }}
-            aria-labelledby="tableTitle"
-            size="medium"
-          >
-            <EnhancedTableHead
-              numSelected={selected.length}
-              order={order}
-              orderBy={orderBy}
-              onSelectAllClick={handleSelectAllClick}
-              onRequestSort={handleRequestSort}
-              rowCount={rows.length}
-            />
-            <TableBody>
-              {visibleRows.map((row, index) => {
-                const isItemSelected = selected.includes(row.id)
-                const labelId = `enhanced-table-checkbox-${index}`
+  if (error) {
+    return (
+      <Box sx={{ width: '100%' }}>
+        <Typography
+          variant="body1"
+          color="error"
+          sx={{ mt: 4, textAlign: 'center' }}
+        >
+          {error}
+        </Typography>
+      </Box>
+    )
+  } else if (loading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '300px', // da loader ne bude sabijen
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
+  } else
+    return (
+      <Box sx={{ width: '100%' }}>
+        <Paper sx={{ width: '100%', mb: 2 }}>
+          <EnhancedTableToolbar numSelected={selected.length} />
+          <TableContainer>
+            <Table sx={{ minWidth: 750 }} size="medium">
+              <EnhancedTableHead
+                numSelected={selected.length}
+                order={order}
+                orderBy={orderBy}
+                onSelectAllClick={handleSelectAllClick}
+                onRequestSort={handleRequestSort}
+                rowCount={rows.length}
+              />
+              <TableBody>
+                {visibleRows.map((row, index) => {
+                  const isItemSelected = selected.includes(row.id)
 
-                return (
-                  <TableRow
-                    hover
-                    onClick={(event) => handleClick(event, row.id)}
-                    role="checkbox"
-                    aria-checked={isItemSelected}
-                    tabIndex={-1}
-                    key={row.id}
-                    selected={isItemSelected}
-                    sx={{ cursor: 'pointer' }}
-                  >
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        color="primary"
-                        checked={isItemSelected}
-                        inputProps={{
-                          'aria-labelledby': labelId,
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell
-                      component="th"
-                      id={labelId}
-                      scope="row"
-                      padding="none"
+                  return (
+                    <TableRow
+                      tabIndex={-1}
+                      key={row.id}
+                      selected={isItemSelected}
                     >
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                      >
-                        <img
-                          src={row.image}
-                          alt={row.name}
-                          style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: '50%',
-                            objectFit: 'cover',
-                          }}
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          onChange={(event) => handleClick(event, row.id)}
+                          color="primary"
+                          checked={isItemSelected}
                         />
-                        <Typography variant="body1">{row.name}</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell align="left" padding="none">
-                      {row.opis}
-                    </TableCell>
+                      </TableCell>
+                      <TableCell component="th" scope="row" padding="none">
+                        <Box
+                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                        >
+                          <img
+                            src={row.image}
+                            alt={row.name}
+                            style={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: '50%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                          <Typography variant="body1">{row.name}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="left" padding="none">
+                        {row.description}
+                      </TableCell>
 
-                    <TableCell align="right">
-                      <Link href={`/authors/${row.id}`}>
-                        <MoreVertIcon className="hover:cursor-pointer" />
-                      </Link>
-                    </TableCell>
+                      <TableCell align="right">
+                        <div
+                          onClick={
+                            openMenu === index
+                              ? () => closeMenu()
+                              : () => toggleMenu(index)
+                          }
+                        >
+                          <MoreVertIcon className="hover:cursor-pointer" />
+                        </div>
+                        {openMenu === index && (
+                          <div className="absolute w-[320px] -ml-42 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
+                            <Link href={`/authors/${row.id}`}>
+                              <div className="capitalize px-4 py-3">
+                                <DescriptionOutlinedIcon
+                                  sx={{
+                                    width: '20px',
+                                    height: '20px',
+                                  }}
+                                  className="mr-1"
+                                />
+                                Pogledaj detalje
+                              </div>
+                            </Link>
+                            <div className="capitalize px-4 py-3">
+                              <CreateOutlinedIcon
+                                sx={{
+                                  width: '20px',
+                                  height: '20px',
+                                }}
+                                className="mr-1"
+                              />
+                              Izmjeni autora
+                            </div>
+                            <div className="capitalize px-4 py-3">
+                              <DeleteOutlineIcon
+                                sx={{
+                                  width: '20px',
+                                  height: '20px',
+                                }}
+                                className="mr-1"
+                              />
+                              Izbrisi autora
+                            </div>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+                {emptyRows > 0 && (
+                  <TableRow
+                    style={{
+                      height: 53 * emptyRows,
+                    }}
+                  >
+                    <TableCell colSpan={6} />
                   </TableRow>
-                )
-              })}
-              {emptyRows > 0 && (
-                <TableRow
-                  style={{
-                    height: 53 * emptyRows,
-                  }}
-                >
-                  <TableCell colSpan={6} />
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 20]}
-          component="div"
-          count={rows.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Paper>
-    </Box>
-  )
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 20]}
+            component="div"
+            count={rows.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </Paper>
+      </Box>
+    )
 }

@@ -1,4 +1,4 @@
-import { ApiResponse, logInData, NewAuthorData } from "../../types";
+import { ApiResponse, FetchAuthorResponse, logInData, NewAuthorData } from "../../types";
 import api from "./axios";
 
 export const get = async(
@@ -53,10 +53,9 @@ export const fetchAllAuthors = async (perPage = 20) => {
       }
     };
 
-export const fetchAuthorById = async (authorId: number) => {
+export const fetchAuthorById = async (authorId: number):  Promise<FetchAuthorResponse> => {
       try {
         const response = await api.get(`/authors/${authorId}`);
-        //console.log("podaci:",response)
         return response.data;
       } catch (error: any) {
         console.error(`Error fetching author with ID ${authorId}:`, error);

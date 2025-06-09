@@ -3,29 +3,38 @@ import slika from '@/../public/default.png'
 import { fetchAuthorById } from '@/utils/apiService'
 import { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
+import { Author } from '../../../../types'
+import { Box, CircularProgress, Typography } from '@mui/material'
 
 //Promijeniti sliku da bude dinamicna kasnije
 
-export default function showAuthor() {
-  const [data, setData] = useState<any>()
+export default function ShowAuthor() {
+  const [data, setData] = useState<Author>()
   const [id, setId] = useState<number>()
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState<boolean>(true)
 
   const path = usePathname()
 
   useEffect(() => {
+    setLoading(true)
     if (path) {
-      let string = path.split('/')
-      setId(Number(string[2]))
+      try {
+        let string = path.split('/')
+        setId(Number(string[2]))
+      } catch (error) {
+        console.error('Greška prilikom učitavanja autora:', error)
+        setError('Nije moguće učitati autora. Pokušajte ponovo kasnije.')
+      } finally {
+        setLoading(false)
+      }
     }
   }, [path])
-
-  console.log('Id:', id)
 
   useEffect(() => {
     if (id) {
       const loadAuthors = async () => {
-        const author = await fetchAuthorById(id) //ISPRAVITI DA BUDE DINAMICNO
-        //console.log('Author:', author)
+        const author = await fetchAuthorById(id)
         setData(author.author)
       }
 
@@ -35,7 +44,32 @@ export default function showAuthor() {
 
   console.log('Data', data)
 
-  if (data)
+  if (error) {
+    return (
+      <Box sx={{ width: '100%' }}>
+        <Typography
+          variant="body1"
+          color="error"
+          sx={{ mt: 4, textAlign: 'center' }}
+        >
+          {error}
+        </Typography>
+      </Box>
+    )
+  } else if (loading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          padding: '50px',
+          alignItems: 'center',
+          minHeight: '300px', // da loader ne bude sabijen
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    )
+  } else if (data)
     return (
       <div className="px-4 py-3 text-xl font-medium max-w-[463px]">
         <h1 className="capitalize">

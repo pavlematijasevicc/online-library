@@ -19,13 +19,15 @@ import Tooltip from '@mui/material/Tooltip'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { visuallyHidden } from '@mui/utils'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
-import { fetchAllAuthors } from '@/utils/apiService'
+import { deleteAuthor, fetchAllAuthors } from '@/utils/apiService'
 import Link from 'next/link'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined'
-import DescriptionOutlinedIcon from '@mui/icons-material/DescriptionOutlined'
+import { stringToColor, stringAvatar } from '@/utils/utiles'
 import { Author } from '../../../types'
 import CircularProgress from '@mui/material/CircularProgress'
+import { Avatar, Button, TextField } from '@mui/material'
+import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
 
 interface Data {
   id: number
@@ -196,6 +198,10 @@ export default function EnhancedTable() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [openMenu, setOpenMenu] = useState<number | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [authorToDelete, setAuthorToDelete] = useState<number | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const inputRef = React.useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const loadAuthors = async () => {
@@ -224,12 +230,39 @@ export default function EnhancedTable() {
     setOpenMenu(null)
   }
 
-  let rows = data.map((author) => ({
-    id: author.id,
-    image: author.picture ? `http://localhost/${author.picture}` : '',
-    name: `${author.first_name} ${author.last_name}`,
-    description: author.biography || 'Nema opisa',
-  }))
+  const handleDeleteAuthor = async (id: number) => {
+    try {
+      await deleteAuthor(id)
+      setShowDeleteModal(false)
+      setAuthorToDelete(null)
+      window.location.reload()
+    } catch (err) {
+      alert('Greška pri brisanju autora.')
+    }
+  }
+
+  const deleteConfirmation = (id: number) => {
+    setAuthorToDelete(id)
+    setShowDeleteModal(true)
+    closeMenu()
+  }
+
+  const closeDeleteModal = () => {
+    setAuthorToDelete(null)
+    setShowDeleteModal(false)
+  }
+  let rows = data
+    .map((author) => ({
+      id: author.id,
+      image: author.picture ? `http://localhost/${author.picture}` : '',
+      name: `${author.first_name} ${author.last_name}`,
+      description: author.biography || 'Nema opisa',
+    }))
+    .filter(
+      (row) =>
+        row.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        row.description.toLowerCase().includes(searchQuery.toLowerCase())
+    )
 
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
@@ -273,6 +306,10 @@ export default function EnhancedTable() {
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage)
+  }
+
+  const handleIconClick = () => {
+    inputRef.current?.focus()
   }
 
   const handleChangeRowsPerPage = (
@@ -322,6 +359,29 @@ export default function EnhancedTable() {
   } else
     return (
       <Box sx={{ width: '100%' }}>
+        <Box className="absolute -mt-14 ml-390 flex items-center justify-center">
+          <TextField
+            inputRef={inputRef}
+            className="text-sm font-normal pt-1 height-[30px] pr-0 m-0 w-[140px]"
+            label="Pretrazi autore.."
+            variant="outlined"
+            size="small"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  border: 'none',
+                },
+                height: 36,
+              },
+            }}
+          />
+          <SearchOutlinedIcon
+            className="text-grey-text hover:cursor-pointer"
+            onClick={handleIconClick}
+          />
+        </Box>
         <Paper sx={{ width: '100%', mb: 2 }}>
           <EnhancedTableToolbar numSelected={selected.length} />
           <TableContainer>
@@ -355,16 +415,7 @@ export default function EnhancedTable() {
                         <Box
                           sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                         >
-                          <img
-                            src={row.image}
-                            alt={row.name}
-                            style={{
-                              width: 40,
-                              height: 40,
-                              borderRadius: '50%',
-                              objectFit: 'cover',
-                            }}
-                          />
+                          <Avatar {...stringAvatar(`${row.name}`)} />
                           <Typography variant="body1">{row.name}</Typography>
                         </Box>
                       </TableCell>
@@ -383,40 +434,39 @@ export default function EnhancedTable() {
                           <MoreVertIcon className="hover:cursor-pointer" />
                         </div>
                         {openMenu === index && (
-                          <div className="absolute w-[320px] -ml-42 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
-                            <Link href={`/authors/${row.id}`}>
-                              <div className="capitalize px-4 py-3">
-                                <DescriptionOutlinedIcon
+                          <>
+                            <div
+                              className="fixed inset-0 bg-transparent"
+                              onClick={() => setOpenMenu(null)}
+                            ></div>
+                            <div className="absolute w-[320px] -ml-42 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
+                              <Link href={`/authors/${row.id}`}>
+                                <div className="capitalize px-4 py-3 flex items-center">
+                                  <CreateOutlinedIcon
+                                    sx={{
+                                      width: '20px',
+                                      height: '20px',
+                                    }}
+                                    className="mr-1"
+                                  />
+                                  Izmjeni autora
+                                </div>
+                              </Link>
+                              <div
+                                className="capitalize px-4 py-3 flex items-center hover:cursor-pointer"
+                                onClick={() => deleteConfirmation(row.id)}
+                              >
+                                <DeleteOutlineIcon
                                   sx={{
                                     width: '20px',
                                     height: '20px',
                                   }}
                                   className="mr-1"
                                 />
-                                Pogledaj detalje
+                                Izbrisi autora
                               </div>
-                            </Link>
-                            <div className="capitalize px-4 py-3">
-                              <CreateOutlinedIcon
-                                sx={{
-                                  width: '20px',
-                                  height: '20px',
-                                }}
-                                className="mr-1"
-                              />
-                              Izmjeni autora
                             </div>
-                            <div className="capitalize px-4 py-3">
-                              <DeleteOutlineIcon
-                                sx={{
-                                  width: '20px',
-                                  height: '20px',
-                                }}
-                                className="mr-1"
-                              />
-                              Izbrisi autora
-                            </div>
-                          </div>
+                          </>
                         )}
                       </TableCell>
                     </TableRow>
@@ -444,6 +494,39 @@ export default function EnhancedTable() {
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Paper>
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Overlay */}
+            <div
+              className="fixed inset-0 bg-black opacity-50"
+              onClick={closeDeleteModal}
+            ></div>
+
+            {/* Modal box */}
+            <div className="z-50 bg-white p-6 rounded-xl shadow-lg w-[320px] relative text-center">
+              <p className="text-gray-800 text-base font-medium mb-6">
+                Da li ste sigurni da želite da obrišete autora?
+              </p>
+              <div className="flex justify-between">
+                <button
+                  onClick={() => {
+                    if (authorToDelete !== null)
+                      handleDeleteAuthor(authorToDelete)
+                  }}
+                  className="uppercase w-[124px] text-sm font-medium py-2 px-4 bg-blue text-white rounded hover:bg-blue-500 transition-colors duration-200 hover:cursor-pointer"
+                >
+                  Potvrdi
+                </button>
+                <button
+                  onClick={closeDeleteModal}
+                  className="uppercase w-[124px] bg-blue text-sm font-medium py-2 px-4 text-white rounded hover:cursor-pointer  hover:bg-blue-500 transition-colors duration-200"
+                >
+                  Poništi
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </Box>
     )
 }

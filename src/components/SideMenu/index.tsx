@@ -38,10 +38,11 @@ export default function SideMenu() {
           width: drawerOpen ? 273 : 56,
           flexShrink: 0,
           '& .MuiDrawer-paper': {
+            marginTop: '72px',
             borderRadius: '0',
             overflow: 'hidden',
             width: drawerOpen ? 273 : 56,
-            height: 'calc(100vh - 72px)',
+            height: '921px',
             justifyContent: 'space-between',
             boxSizing: 'border-box',
             transition: 'width 0.3s',
@@ -52,7 +53,7 @@ export default function SideMenu() {
           },
         }}
         variant="permanent"
-        anchor="bottom"
+        anchor="top"
       >
         <List>
           <ListItem
@@ -67,7 +68,11 @@ export default function SideMenu() {
             </ListItemButton>
           </ListItem>
         </List>
-        {drawerOpen ? <Divider className="-mt-6" /> : <Divider />}
+        {drawerOpen ? (
+          <Divider className="-mt-5.5" />
+        ) : (
+          <Divider className="mt-0.5" />
+        )}
         <List>
           <Link href={'/'}>
             {activeItem === '/' ? (
@@ -185,7 +190,7 @@ export default function SideMenu() {
             )}
           </Link>
           <Link href={'/books'}>
-            {activeItem === '/books' ? (
+            {activeItem === '/books' || activeItem === '/books/new-book' ? (
               <ListItem
                 key={'books'}
                 disablePadding
@@ -195,7 +200,10 @@ export default function SideMenu() {
                   <ListItemIcon>
                     <MenuBookIcon
                       className={
-                        activeItem === '/books' ? 'text-blue' : 'text-grey-text'
+                        activeItem === '/books' ||
+                        activeItem === '/books/new-book'
+                          ? 'text-blue'
+                          : 'text-grey-text'
                       }
                     />
                   </ListItemIcon>
@@ -208,7 +216,10 @@ export default function SideMenu() {
                   <ListItemIcon>
                     <MenuBookIcon
                       className={
-                        activeItem === '/books' ? 'text-blue' : 'text-grey-text'
+                        activeItem === '/books' ||
+                        activeItem === '/books/new-book'
+                          ? 'text-blue'
+                          : 'text-grey-text'
                       }
                     />
                   </ListItemIcon>
@@ -218,7 +229,8 @@ export default function SideMenu() {
             )}
           </Link>
           <Link href={'/authors'}>
-            {activeItem === '/authors' || activeItem === '/new-author' ? (
+            {activeItem === '/authors' ||
+            activeItem === '/authors/new-author' ? (
               <ListItem
                 key={'authors'}
                 disablePadding
@@ -229,7 +241,7 @@ export default function SideMenu() {
                     <ClassOutlinedIcon
                       className={
                         activeItem === '/authors' ||
-                        activeItem === '/new-author'
+                        activeItem === '/authors/new-author'
                           ? 'text-blue'
                           : 'text-grey-text'
                       }
@@ -245,7 +257,7 @@ export default function SideMenu() {
                     <ClassOutlinedIcon
                       className={
                         activeItem === '/authors' ||
-                        activeItem === '/new-author'
+                        activeItem === '/authors/new-author'
                           ? 'text-blue'
                           : 'text-grey-text'
                       }

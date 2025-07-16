@@ -26,3 +26,30 @@ export interface NewAuthorData {
   export type FetchAuthorResponse = {
     author: Author;
   };
+
+  export interface BookData {
+    name: string
+    description: string
+    categories: string[]
+    genres: string[]
+    authors: number[]
+    publishers: string[]
+    year: number | null
+    number_of_copies_available: number | null
+    number_of_pages: number | null
+    script: string
+    binding: string
+    dimensions: string
+    isbn: string
+    images: File[] | null,
+    format: string,
+    language:string
+  }
+
+  export type Props = {
+    bookData: BookData
+    setBookData: React.Dispatch<React.SetStateAction<BookData>>
+    value: string,
+    setValue: React.Dispatch<React.SetStateAction<string>>
+    nameInputRef:  React.RefObject<HTMLInputElement | null>
+  }

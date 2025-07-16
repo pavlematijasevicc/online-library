@@ -89,6 +89,14 @@ export const deleteAuthor = async (authorId: number): Promise<any> => {
   }
 };
 
+export const createBook = async (data: any) => {
+  const response = await api.post('/books/create', data, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+  return response.data
+}
 
     
 

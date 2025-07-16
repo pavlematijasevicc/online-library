@@ -28,6 +28,9 @@ import CircularProgress from '@mui/material/CircularProgress'
 import { Avatar, Button, TextField } from '@mui/material'
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
 import { getComparator, Order } from '@/utils/utiles'
+import CheckIcon from '@mui/icons-material/Check'
+import CloseIcon from '@mui/icons-material/Close'
+import HistoryEduOutlinedIcon from '@mui/icons-material/HistoryEduOutlined'
 
 interface IssuedBook {
   id: number
@@ -519,6 +522,24 @@ export default function WriteOfTheBookTable() {
             </div>
           </div>
         )}
+        <Box className="flex justify-end">
+          <Button
+            variant="contained"
+            type="submit"
+            className="uppercase text-sm font-medium pt-[10px] px-4 bg-blue mr-2 self-end"
+          >
+            <HistoryEduOutlinedIcon className="mr-1" />
+            Otpisi knjigu
+          </Button>
+          <Button
+            variant="contained"
+            type="button"
+            className="uppercase w-[124px] text-sm font-medium pt-[10px] px-4 bg-transparent self-end text-blue border-blue border-1"
+          >
+            <CloseIcon />
+            Ponisti
+          </Button>
+        </Box>
       </Box>
     )
 }

@@ -262,7 +262,7 @@ export default function ShowAuthor() {
           </Button>
 
           <TextField
-            inputRef={nameInputRef} // Dodaj ovo
+            inputRef={nameInputRef}
             label="Unesite Ime.."
             variant="outlined"
             value={name}

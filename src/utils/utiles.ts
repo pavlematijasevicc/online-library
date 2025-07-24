@@ -94,3 +94,75 @@ export  function stringToColor(string: string) {
 
     return color
   }
+
+   export function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
+    if (b[orderBy] < a[orderBy]) {
+      return -1
+    }
+    if (b[orderBy] > a[orderBy]) {
+      return 1
+    }
+    return 0
+  }
+
+ export type Order = 'asc' | 'desc'
+
+export function getComparator<Key extends keyof any>(
+  order: Order,
+  orderBy: Key
+): (
+  a: { [key in Key]: number | string },
+  b: { [key in Key]: number | string }
+) => number {
+  return order === 'desc'
+    ? (a, b) => descendingComparator(a, b, orderBy)
+    : (a, b) => -descendingComparator(a, b, orderBy)
+}
+
+
+export function checkBookName(ime: string): string | null {
+  const errors: string[] = [];
+
+  if (ime.length === 0) 
+        {
+            errors.push('Morate unijeti naziv knjige!');
+            return  `${errors}`
+        }
+
+  return null;
+}
+
+export function checkDescription(description: string | number): string | null {
+  if (!description || description === "") {
+    return "Morate napisati kratak sazetak!";
+  }
+  return null;
+}
+
+export function checkAuthors(authors: number[]): string | null {
+  if (!authors || authors.length === 0) {
+    return "Morate izabrati autore!";
+  }
+  return null;
+}
+
+export function checkQuantity(quantity: number | null): string | null {
+  if (!quantity || quantity<1) {
+    return "Morate unijeti kolicinu knjiga!";
+  }
+  return null;
+}
+
+export function checkPages(pages: number | null): string | null {
+  if (!pages || pages<10) {
+    return "Morate unijeti broj stranica!";
+  }
+  return null;
+}
+
+export function checkIsbn(isbn: string | number): string | null {
+  if (!isbn || isbn === "") {
+    return "Morate unijeti ISBN knjige!";
+  }
+  return null;
+}

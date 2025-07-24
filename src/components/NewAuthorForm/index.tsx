@@ -8,7 +8,7 @@ import {
 import React, { useState } from 'react'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
-import PhotoIcon from '@mui/icons-material/Photo'
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
 import { checkIme } from '@/utils/utiles'
 import { checkPrezime } from '@/utils/utiles'
 import { createAuthor } from '@/utils/apiService'
@@ -55,7 +55,6 @@ export default function AuthorForm() {
         handleAlert()
       } catch (error) {
         console.error('Error submitting form:', error)
-        // show error
       }
     }
   }
@@ -113,7 +112,10 @@ export default function AuthorForm() {
           />
         ) : (
           <div className="absolute flex flex-col justify-center items-center w-full h-full z-0">
-            <PhotoIcon color="disabled" className="mx-auto mb-1" />
+            <ImageOutlinedIcon
+              sx={{ color: '#00000099' }}
+              className="mx-auto mb-1"
+            />
             <span className="text-base font-normal text-grey-text">
               Add photo
             </span>

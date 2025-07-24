@@ -80,7 +80,6 @@
   --color-inputB: #00000033;
   --color-border: #00000040;
 
-
   /* Material UI text & common colors */
   --color-text-primary: rgb(var(--mui-palette-text-primaryChannel));
   --color-text-secondary: rgb(var(--mui-palette-text-secondaryChannel));

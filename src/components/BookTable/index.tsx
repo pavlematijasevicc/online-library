@@ -19,12 +19,11 @@ import Tooltip from '@mui/material/Tooltip'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { visuallyHidden } from '@mui/utils'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
-import { deleteAuthor, fetchAllAuthors } from '@/utils/apiService'
+import { deleteBook, getAllBooks } from '@/utils/apiService'
 import Link from 'next/link'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined'
-import { stringToColor, stringAvatar } from '@/utils/utiles'
-import { Author } from '../../../types'
+import { stringAvatar } from '@/utils/utiles'
 import CircularProgress from '@mui/material/CircularProgress'
 import { Avatar, Button, TextField } from '@mui/material'
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
@@ -33,29 +32,71 @@ import { getComparator, Order } from '@/utils/utiles'
 interface Data {
   id: number
   image: string
-  name: string
-  description: string
+  name: string // Naziv knjige
+  author: string
+  category: string
+  available: number
+  reserved: number
+  issued: number
+  overdue: number
+  total: number
 }
 
 interface HeadCell {
-  disablePadding: boolean
   id: keyof Data
-  label: string
   numeric: boolean
+  disablePadding: boolean
+  label: string
 }
 
 const headCells: readonly HeadCell[] = [
   {
     id: 'name',
     numeric: false,
-    disablePadding: true,
-    label: 'Naziv Autora',
+    disablePadding: false,
+    label: 'Naziv Knjige',
   },
   {
-    id: 'description',
+    id: 'author',
     numeric: false,
-    disablePadding: true,
-    label: 'Opis',
+    disablePadding: false,
+    label: 'Autor',
+  },
+  {
+    id: 'category',
+    numeric: false,
+    disablePadding: false,
+    label: 'Kategorija',
+  },
+  {
+    id: 'available',
+    numeric: true,
+    disablePadding: false,
+    label: 'Na raspolaganju',
+  },
+  {
+    id: 'reserved',
+    numeric: true,
+    disablePadding: false,
+    label: 'Rezervisano',
+  },
+  {
+    id: 'issued',
+    numeric: true,
+    disablePadding: false,
+    label: 'Izdato',
+  },
+  {
+    id: 'overdue',
+    numeric: true,
+    disablePadding: false,
+    label: 'U prekoračenju',
+  },
+  {
+    id: 'total',
+    numeric: true,
+    disablePadding: false,
+    label: 'Ukupna količina',
   },
 ]
 
@@ -98,11 +139,11 @@ function EnhancedTableHead(props: EnhancedTableProps) {
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
-            align={headCell.numeric ? 'right' : 'left'}
+            align={'left'}
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
             sx={{
-              fontWeight: headCell.id === 'description' ? 'normal' : 'bold',
+              fontWeight: headCell.id === 'name' ? 'bold' : 'normal',
             }}
           >
             <TableSortLabel
@@ -167,37 +208,80 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
 }
 export default function EnhancedTable() {
   const [order, setOrder] = React.useState<Order>('asc')
-  const [orderBy, setOrderBy] = React.useState<keyof Data>('description')
+  const [orderBy, setOrderBy] = React.useState<keyof Data>('name')
   const [selected, setSelected] = React.useState<readonly number[]>([])
   const [page, setPage] = React.useState(0)
   const [rowsPerPage, setRowsPerPage] = React.useState(5)
-  const [data, setData] = useState<Author[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState<boolean>(true)
-  const [openMenu, setOpenMenu] = useState<number | null>(null)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [authorToDelete, setAuthorToDelete] = useState<number | null>(null)
-  const [searchQuery, setSearchQuery] = useState('')
-  const inputRef = React.useRef<HTMLInputElement>(null)
+  const [data, setData] = useState<Data[]>([])
 
   useEffect(() => {
-    const loadAuthors = async () => {
+    const fetchBooks = async () => {
       setLoading(true)
       try {
-        const authors = await fetchAllAuthors(20)
-        setData(authors.data.data)
-      } catch (error) {
-        console.error('Greška prilikom učitavanja autora:', error)
-        setError('Nije moguće učitati autore. Pokušajte ponovo kasnije.')
+        const response = await getAllBooks(20, '')
+        console.log('Response:', response)
+        const fetchedBooks = response.books.data
+
+        const mapped: Data[] = fetchedBooks.map((book: any, index: number) => ({
+          id: book.id ?? `${book.name}_${index}`, // jedinstveni ID
+          image: book.image ?? '',
+          name: book.name ?? '',
+          author: Array.isArray(book.authors)
+            ? book.authors
+                .map((a: any) =>
+                  `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim()
+                )
+                .join(', ')
+            : '',
+          category: Array.isArray(book.categories)
+            ? book.categories.map((c: any) => c.name).join(', ')
+            : '',
+          available: book.number_of_copies_available - 0,
+          reserved: 0,
+          issued: 0,
+          overdue: 0,
+          total: book.number_of_copies_available,
+        }))
+
+        // Filtriraj duplikate po imenu
+        const seen = new Set()
+        const uniqueBooks = mapped.filter((book) => {
+          if (seen.has(book.name)) return false
+          seen.add(book.name)
+          return true
+        })
+
+        setData(uniqueBooks)
+      } catch (err) {
+        console.error(err)
+        setError('Greška pri dohvaćanju knjiga.')
       } finally {
         setLoading(false)
       }
     }
 
-    loadAuthors()
+    fetchBooks()
   }, [])
 
-  console.log('Data:', data)
+  console.log('knjige:', data)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
+  const [openMenu, setOpenMenu] = useState<number | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [bookToDelete, setBookToDelete] = useState<number | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const inputRef = React.useRef<HTMLInputElement>(null)
+
+  const handleDeleteBook = async (id: number) => {
+    try {
+      await deleteBook(id)
+      setShowDeleteModal(false)
+      setBookToDelete(null)
+      window.location.reload()
+    } catch (err) {
+      alert('Greška pri brisanju knjige.')
+    }
+  }
 
   function toggleMenu(id: number | null) {
     setOpenMenu(id)
@@ -207,39 +291,22 @@ export default function EnhancedTable() {
     setOpenMenu(null)
   }
 
-  const handleDeleteAuthor = async (id: number) => {
-    try {
-      await deleteAuthor(id)
-      setShowDeleteModal(false)
-      setAuthorToDelete(null)
-      window.location.reload()
-    } catch (err) {
-      alert('Greška pri brisanju autora.')
-    }
-  }
-
   const deleteConfirmation = (id: number) => {
-    setAuthorToDelete(id)
+    setBookToDelete(id)
     setShowDeleteModal(true)
     closeMenu()
   }
 
   const closeDeleteModal = () => {
-    setAuthorToDelete(null)
+    setBookToDelete(null)
     setShowDeleteModal(false)
   }
-  let rows = data
-    .map((author) => ({
-      id: author.id,
-      image: author.picture ? `http://localhost/${author.picture}` : '',
-      name: `${author.first_name} ${author.last_name}`,
-      description: author.biography || 'Nema opisa',
-    }))
-    .filter(
-      (row) =>
-        row.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        row.description.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+  
+  let rows = data.filter(
+    (row) =>
+      row.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      row.author.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
@@ -336,11 +403,11 @@ export default function EnhancedTable() {
   } else
     return (
       <Box sx={{ width: '100%' }}>
-        <Box className="absolute -mt-14 ml-390 flex items-center justify-center">
+        <Box className="absolute -mt-14 ml-400 flex items-center justify-center">
           <TextField
             inputRef={inputRef}
             className="text-sm font-normal pt-1 height-[30px] pr-0 m-0 w-[140px]"
-            label="Pretrazi autore.."
+            label="Pretrazi knjige.."
             variant="outlined"
             size="small"
             value={searchQuery}
@@ -362,7 +429,18 @@ export default function EnhancedTable() {
         <Paper sx={{ width: '100%', mb: 2 }}>
           <EnhancedTableToolbar numSelected={selected.length} />
           <TableContainer>
-            <Table sx={{ minWidth: 750 }} size="medium">
+            <Table
+              sx={{
+                minWidth: 750,
+                '& td': {
+                  borderBottom: '1px solid rgba(224, 224, 224, 1)', // standardna MUI linija
+                },
+                '& th': {
+                  borderBottom: '1px solid rgba(224, 224, 224, 1)',
+                },
+              }}
+              size="medium"
+            >
               <EnhancedTableHead
                 numSelected={selected.length}
                 order={order}
@@ -374,33 +452,62 @@ export default function EnhancedTable() {
               <TableBody>
                 {visibleRows.map((row, index) => {
                   const isItemSelected = selected.includes(row.id)
+                  const labelId = `enhanced-table-checkbox-${index}`
 
                   return (
                     <TableRow
+                      hover
+                      role="checkbox"
+                      aria-checked={isItemSelected}
                       tabIndex={-1}
                       key={row.id}
                       selected={isItemSelected}
+                      sx={{ cursor: 'pointer' }}
                     >
                       <TableCell padding="checkbox">
                         <Checkbox
-                          onChange={(event) => handleClick(event, row.id)}
+                          sx={{ verticalAlign: 'middle' }}
                           color="primary"
                           checked={isItemSelected}
+                          onChange={(event) => handleClick(event, row.id)}
+                          inputProps={{
+                            'aria-labelledby': labelId,
+                          }}
                         />
                       </TableCell>
-                      <TableCell component="th" scope="row" padding="none">
-                        <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                        >
-                          <Avatar {...stringAvatar(`${row.name}`)} />
-                          <Typography variant="body1">{row.name}</Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell align="left" padding="none">
-                        {row.description}
+
+                      {/* Prva kolona: Slika i ime knjige */}
+                      <TableCell
+                        component="th"
+                        id={labelId}
+                        scope="row"
+                        padding="none"
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 2,
+                          py: 2, // standardna visina reda
+                          borderBottom: '1px solid rgba(224, 224, 224, 1)', // dodatna sigurnost
+                        }}
+                      >
+                        <Avatar
+                          alt={row.name}
+                          src={row.image}
+                          sx={{ width: 32, height: 32, marginRight: 1 }}
+                          variant="square"
+                        />
+                        {row.name}
                       </TableCell>
 
-                      <TableCell align="right">
+                      {/* Ostale kolone */}
+                      <TableCell align="left">{row.author}</TableCell>
+                      <TableCell align="left">{row.category}</TableCell>
+                      <TableCell align="left">{row.available}</TableCell>
+                      <TableCell align="left">{row.reserved}</TableCell>
+                      <TableCell align="left">{row.issued}</TableCell>
+                      <TableCell align="left">{row.overdue}</TableCell>
+                      <TableCell align="left">{row.total}</TableCell>
+                      <TableCell align="left">
                         <div
                           onClick={
                             openMenu === index
@@ -416,8 +523,8 @@ export default function EnhancedTable() {
                               className="fixed inset-0 bg-transparent"
                               onClick={() => setOpenMenu(null)}
                             ></div>
-                            <div className="absolute w-[320px] -ml-42 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
-                              <Link href={`/authors/${row.id}`}>
+                            <div className="absolute w-[320px] -ml-80 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
+                              <Link href={`/books/${row.id}`}>
                                 <div className="capitalize px-4 py-3 flex items-center">
                                   <CreateOutlinedIcon
                                     sx={{
@@ -426,7 +533,7 @@ export default function EnhancedTable() {
                                     }}
                                     className="mr-1"
                                   />
-                                  Izmjeni autora
+                                  Izmjeni knjigu
                                 </div>
                               </Link>
                               <div
@@ -440,7 +547,7 @@ export default function EnhancedTable() {
                                   }}
                                   className="mr-1"
                                 />
-                                Izbrisi autora
+                                Izbrisi knjigu
                               </div>
                             </div>
                           </>
@@ -449,6 +556,7 @@ export default function EnhancedTable() {
                     </TableRow>
                   )
                 })}
+
                 {emptyRows > 0 && (
                   <TableRow
                     style={{
@@ -482,13 +590,12 @@ export default function EnhancedTable() {
             {/* Modal box */}
             <div className="z-50 bg-white p-6 rounded-xl shadow-lg w-[320px] relative text-center">
               <p className="text-gray-800 text-base font-medium mb-6">
-                Da li ste sigurni da želite da obrišete autora?
+                Da li ste sigurni da želite da izbrišete knjigu?
               </p>
               <div className="flex justify-between">
                 <button
                   onClick={() => {
-                    if (authorToDelete !== null)
-                      handleDeleteAuthor(authorToDelete)
+                    if (bookToDelete !== null) handleDeleteBook(bookToDelete)
                   }}
                   className="uppercase w-[124px] text-sm font-medium py-2 px-4 bg-blue text-white rounded hover:bg-blue-500 transition-colors duration-200 hover:cursor-pointer"
                 >

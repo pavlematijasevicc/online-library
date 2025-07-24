@@ -1,7 +1,4 @@
-'use client'
-
 import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
 import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined'
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 import AssignmentReturnOutlinedIcon from '@mui/icons-material/AssignmentReturnOutlined'
@@ -10,26 +7,43 @@ import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import HistoryEduOutlinedIcon from '@mui/icons-material/HistoryEduOutlined'
 import { useEffect, useRef, useState } from 'react'
-import WriteOfTheBookTable from '@/components/WriteOfTheBookTable'
-import { BookData } from '../../../../../types'
+import { usePathname, useRouter } from 'next/navigation'
+import CloseIcon from '@mui/icons-material/Close'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
+import {
+  Box,
+  Button,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+} from '@mui/material'
+import ReturnTheBookTable from '@/components/ReturnTheBookTable'
 import { deleteBook, fetchBookById } from '@/utils/apiService'
+import { BookData } from '../../../../../types'
 
-export default function WriteOfTheBook() {
-  const [openMenu, setOpenMenu] = useState(false)
+export default function IssuedBook() {
+  const [openMenu, setOpenMenu] = useState<boolean>(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [pupil, setPupil] = useState<string>('')
+  const nameInputRef = useRef<HTMLInputElement>(null)
+  const [issueDate, setIssueDate] = useState<Date | null>(null)
+  const [returnDate, setReturnDate] = useState<Date | null>(null)
   const [id, setId] = useState<number>()
   const [data, setData] = useState<BookData>()
-  const nameInputRef = useRef<HTMLInputElement>(null)
-  const path = usePathname()
   const router = useRouter()
+  const path = usePathname()
 
   useEffect(() => {
     if (path) {
       try {
-        const parts = path.split('/')
-        setId(Number(parts[2]))
+        let string = path.split('/')
+        setId(Number(string[2]))
       } catch (error) {
-        console.error('Greška prilikom parsiranja ID-a:', error)
+        console.error('Greška prilikom učitavanja knjige:', error)
       }
     }
   }, [path])
@@ -37,17 +51,15 @@ export default function WriteOfTheBook() {
   useEffect(() => {
     if (id) {
       const loadBook = async () => {
-        try {
-          const book = await fetchBookById(id)
-          setData(book.book)
-        } catch (err) {
-          console.error('Greška prilikom učitavanja knjige:', err)
-        }
+        const book = await fetchBookById(id)
+        setData(book.book)
       }
 
       loadBook()
     }
   }, [id])
+
+  console.log('Data:', data)
 
   const handleDeleteBook = async (id: number) => {
     try {
@@ -59,10 +71,6 @@ export default function WriteOfTheBook() {
     }
   }
 
-  function toggleMenu() {
-    setOpenMenu((prev) => !prev)
-  }
-
   const deleteConfirmation = (id: number) => {
     setShowDeleteModal(true)
     setOpenMenu(false)
@@ -70,6 +78,10 @@ export default function WriteOfTheBook() {
 
   const closeDeleteModal = () => {
     setShowDeleteModal(false)
+  }
+
+  function toggleMenu() {
+    setOpenMenu((prev) => !prev)
   }
 
   const handleEditClick = () => {
@@ -89,17 +101,24 @@ export default function WriteOfTheBook() {
               <span> /</span>
               <span className="uppercase text-blue"> knjiga-{id}</span>
               <span> /</span>
-              <span className="capitalize text-blue"> otpisi knjigu</span>
+              <span className="capitalize text-blue"> vrati knjigu</span>
             </div>
           </div>
           <div className="flex items-center justify-center">
             <div className="flex items-center px-4 mr-4 border-r-1 border-grey-line">
-              <div className="px-2 pl-3 mr-4 text-blue text-sm hover:cursor-pointer bg-active py-2 rounded-sm">
-                <HistoryEduOutlinedIcon
-                  sx={{ width: '18px', height: '18px' }}
-                />
-                <span> Otpisi knjigu </span>
-              </div>
+              <Link
+                href={`${path
+                  .split('/')
+                  .slice(0, -1)
+                  .join('/')}/write-of-the-book`}
+              >
+                <div className="px-2 pl-3 mr-4 text-grey-text text-sm hover:cursor-pointer">
+                  <HistoryEduOutlinedIcon
+                    sx={{ width: '18px', height: '18px' }}
+                  />
+                  <span> Otpisi knjigu </span>
+                </div>
+              </Link>
               <Link
                 href={`${path.split('/').slice(0, -1).join('/')}/issue-book`}
               >
@@ -110,19 +129,13 @@ export default function WriteOfTheBook() {
                   <span> Izdaj knjigu </span>
                 </div>
               </Link>
-              <Link
-                href={`${path
-                  .split('/')
-                  .slice(0, -1)
-                  .join('/')}/return-the-book`}
-              >
-                <div className="px-2 pl-3 mr-4 text-grey-text text-sm hover:cursor-pointer">
-                  <AssignmentReturnOutlinedIcon
-                    sx={{ width: '18px', height: '18px' }}
-                  />
-                  <span> Vrati knjigu </span>
-                </div>
-              </Link>
+
+              <div className="px-3 mr-4 text-blue text-sm hover:cursor-pointer bg-active py-2 rounded-sm">
+                <AssignmentReturnOutlinedIcon
+                  sx={{ width: '18px', height: '18px' }}
+                />
+                <span> Vrati knjigu </span>
+              </div>
               <Link
                 href={`${path
                   .split('/')
@@ -135,35 +148,45 @@ export default function WriteOfTheBook() {
                 </div>
               </Link>
             </div>
-            <div onClick={toggleMenu}>
+            <div onClick={() => toggleMenu()}>
               <MoreVertIcon className="text-grey-text hover:cursor-pointer" />
             </div>
-            {openMenu && (
+            {openMenu === true && (
               <>
+                {/* Overlay */}
                 <div
                   className="fixed inset-0 bg-transparent"
                   onClick={() => setOpenMenu(false)}
-                />
+                ></div>
                 <div className="absolute w-[320px] -mr-40 mt-40 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-90 text-left">
                   <Link href={`${path.split('/').slice(0, -1).join('/')}`}>
                     <div
                       className="capitalize px-4 py-3 hover:cursor-pointer"
-                      onClick={handleEditClick}
+                      onClick={() => {
+                        handleEditClick()
+                      }}
                     >
                       <CreateOutlinedIcon
+                        sx={{
+                          width: '20px',
+                          height: '20px',
+                        }}
                         className="mr-1"
-                        sx={{ width: '20px', height: '20px' }}
                       />
                       Izmijeni podatke
                     </div>
                   </Link>
+
                   <div
                     className="capitalize px-4 py-3 hover:cursor-pointer"
                     onClick={() => deleteConfirmation(id!)}
                   >
                     <DeleteOutlineIcon
+                      sx={{
+                        width: '20px',
+                        height: '20px',
+                      }}
                       className="mr-1"
-                      sx={{ width: '20px', height: '20px' }}
                     />
                     Izbrisi knjigu
                   </div>
@@ -172,9 +195,7 @@ export default function WriteOfTheBook() {
             )}
           </div>
         </div>
-
-        <WriteOfTheBookTable />
-
+        <ReturnTheBookTable />
         {showDeleteModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div

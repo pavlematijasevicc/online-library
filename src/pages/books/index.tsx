@@ -4,6 +4,8 @@ import BookTable from '@/components/BookTable'
 import AddIcon from '@mui/icons-material/Add'
 import { Button } from '@mui/material'
 import Link from 'next/link'
+import { getAllBooks } from '@/utils/apiService'
+import { useEffect, useState } from 'react'
 
 export default function Books() {
   return (

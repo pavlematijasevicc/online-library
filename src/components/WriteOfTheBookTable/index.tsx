@@ -14,21 +14,15 @@ import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
 import Checkbox from '@mui/material/Checkbox'
-import IconButton from '@mui/material/IconButton'
-import Tooltip from '@mui/material/Tooltip'
-import DeleteIcon from '@mui/icons-material/Delete'
 import { visuallyHidden } from '@mui/utils'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
 import { deleteAuthor, fetchAllAuthors } from '@/utils/apiService'
 import Link from 'next/link'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined'
-import { stringAvatar } from '@/utils/utiles'
 import CircularProgress from '@mui/material/CircularProgress'
 import { Avatar, Button, TextField } from '@mui/material'
-import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
 import { getComparator, Order } from '@/utils/utiles'
-import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
 import HistoryEduOutlinedIcon from '@mui/icons-material/HistoryEduOutlined'
 
@@ -353,7 +347,7 @@ export default function WriteOfTheBookTable() {
     )
   } else
     return (
-      <Box sx={{ width: '1832px' }} className="mx-4 mt-8">
+      <Box sx={{ width: '98%' }} className="mx-4 mt-8">
         <Paper sx={{ width: '100%', mb: 2 }}>
           <TableContainer>
             <Table
@@ -527,6 +521,16 @@ export default function WriteOfTheBookTable() {
             variant="contained"
             type="submit"
             className="uppercase text-sm font-medium pt-[10px] px-4 bg-blue mr-2 self-end"
+            disabled={selected.length === 0}
+            sx={{
+              backgroundColor: '#007bff',
+              color: 'white',
+              opacity: selected.length === 0 ? 0.5 : 1,
+              '&.Mui-disabled': {
+                color: 'white',
+                backgroundColor: '#007bff',
+              },
+            }}
           >
             <HistoryEduOutlinedIcon className="mr-1" />
             Otpisi knjigu

@@ -1,11 +1,12 @@
 import { Alert, Box, Button, TextField } from '@mui/material'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
 import { BookData } from '../../../types'
 import { Props } from '../../../types'
-import { createBook } from '@/utils/apiService'
+import { createBook, editBook } from '@/utils/apiService'
+import { usePathname, useRouter } from 'next/navigation'
 
 export default function Multimedia({
   bookData,
@@ -14,6 +15,23 @@ export default function Multimedia({
 }: Props) {
   const [submitted, setSubmitted] = useState(false)
   const [showAlert, setShowAlert] = useState(false)
+  const [id, setId] = useState<number>(0)
+  const [isEditing, setIsEditing] = useState<boolean>(false)
+  const router = useRouter()
+  const path = usePathname()
+
+  useEffect(() => {
+    console.log(path.split('/')[2])
+    if (path.split('/')[2] === 'new-book') setIsEditing(false)
+    else {
+      setIsEditing(true)
+      setId(Number(path.split('/')[2]))
+    }
+  }, [path])
+
+  console.log('Path:', path)
+  console.log('Editing:', isEditing)
+  console.log('Id:', id)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -38,6 +56,61 @@ export default function Multimedia({
     }))
     setSubmitted(false)
     setShowAlert(false)
+  }
+
+  const handleEditingConfirmation = async (e: React.FormEvent) => {
+    e.preventDefault()
+    console.log('editovanje!')
+
+    setSubmitted(true)
+
+    let base64Images: string[] = []
+
+    if (bookData.images && bookData.images.length > 0) {
+      const convertImagesToBase64 = async (files: File[]) => {
+        const promises = files.map((file) => {
+          return new Promise<string>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => resolve(reader.result as string)
+            reader.onerror = reject
+            reader.readAsDataURL(file)
+          })
+        })
+        return await Promise.all(promises)
+      }
+
+      base64Images = await convertImagesToBase64(bookData.images)
+    }
+
+    const filteredBookData = Object.entries(bookData).reduce(
+      (acc, [key, value]) => {
+        const isEmptyArray = Array.isArray(value) && value.length === 0
+        const isEmptyString = typeof value === 'string' && value.trim() === ''
+        const isNullOrUndefined = value === null || value === undefined
+
+        if (!isEmptyArray && !isEmptyString && !isNullOrUndefined) {
+          acc[key as keyof BookData] = value
+        }
+
+        return acc
+      },
+      {} as Partial<BookData>
+    )
+
+    const dataToSend = {
+      ...filteredBookData,
+      ...(base64Images.length > 0 && { images: base64Images }),
+    }
+
+    try {
+      const response = await editBook(id, dataToSend as BookData)
+      console.log('Book successfully edited:', response)
+      handleAlert()
+      router.push('/books')
+    } catch (err) {
+      console.error('Error while editing book:', err)
+      setShowAlert(true)
+    }
   }
 
   const handleMultimediaConfirmation = async (e: React.FormEvent) => {
@@ -88,6 +161,8 @@ export default function Multimedia({
     try {
       const response = await createBook(dataToSend)
       console.log('Book created successfully:', response)
+      handleAlert()
+      router.push('/books')
     } catch (err) {
       console.error('Error while saving book:', err)
       setShowAlert(true)
@@ -97,7 +172,9 @@ export default function Multimedia({
   return (
     <Box
       component="form"
-      onSubmit={handleMultimediaConfirmation}
+      onSubmit={
+        isEditing ? handleEditingConfirmation : handleMultimediaConfirmation
+      }
       sx={{
         width: 724,
         display: 'flex',
@@ -175,7 +252,9 @@ export default function Multimedia({
           onClose={() => setShowAlert(false)}
           variant="filled"
         >
-          Knjiga uspjesno kreirana!
+          {isEditing
+            ? 'Knjiga uspjesno izmijenjena!'
+            : 'Knjiga uspjesno dodata!'}
         </Alert>
       )}
     </Box>

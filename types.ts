@@ -27,6 +27,9 @@ export interface NewAuthorData {
     author: Author;
   };
 
+  export type FetchBookResponse={
+    book: BookData;
+  }
   export interface BookData {
     name: string
     description: string
@@ -46,6 +49,23 @@ export interface NewAuthorData {
     language:string
   }
 
+  export interface Category {
+    id: number
+    name: string
+    description: string
+    icon: string | null
+    created_at: string
+    updated_at: string
+  }
+  
+  export interface Genre {
+    id: number;
+    name: string;
+    description: string;
+    created_at: string;  // ISO 8601 format
+    updated_at: string;  // ISO 8601 format
+  }
+  
   export type Props = {
     bookData: BookData
     setBookData: React.Dispatch<React.SetStateAction<BookData>>

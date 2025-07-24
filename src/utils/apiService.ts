@@ -1,4 +1,4 @@
-import { ApiResponse, FetchAuthorResponse, logInData, NewAuthorData } from "../../types";
+import { ApiResponse, BookData, FetchAuthorResponse, FetchBookResponse, logInData, NewAuthorData } from "../../types";
 import api from "./axios";
 
 export const get = async(
@@ -98,7 +98,80 @@ export const createBook = async (data: any) => {
   return response.data
 }
 
+export async function getAllBooks(perPage = 20, searchValue = '') {
+  try {
+    const response = await api.get('/books', {
+      params: {
+        per_page: perPage,
+        search_value: searchValue
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Greška prilikom dohvaćanja knjiga:', error);
+    throw error;
+  }
+}
+
+export const deleteBook = async (bookId: number): Promise<any> => {
+  try {
+    const response = await api.delete(`/books/${bookId}/destroy`);
+    console.log(`Knjiga sa ID-em ${bookId} je obrisana.`);
+    return response.data;
+  } catch (error: any) {
+    console.error(`Greška pri brisanju knjige sa ID-em ${bookId}:`, error);
+    throw error;
+  }
+};
     
+
+export const fetchAllCategories = async (perPage = 20) => {
+  try {
+        const response = await api.get('/categories', {
+        params: { per_page: perPage }
+        });
+        return response.data;
+      } catch (error: any) {
+        console.error('Error fetching categories:', error);
+        throw error;
+      }
+    };
+
+    export const fetchAllGenres = async (perPage = 20) => {
+      try {
+            const response = await api.get('/genres', {
+            params: { per_page: perPage }
+            });
+            return response.data;
+          } catch (error: any) {
+            console.error('Error fetching genres:', error);
+            throw error;
+          }
+        };
+
+        export const fetchBookById = async (bookId: number):  Promise<FetchBookResponse> => {
+          try {
+            const response = await api.get(`/books/${bookId}`);
+            return response.data;
+          } catch (error: any) {
+            console.error(`Error fetching book with ID ${bookId}:`, error);
+            throw error;
+          }
+    };
+
+    export const editBook = async (
+      bookId: number,
+      data: BookData
+    ): Promise<BookData> => {
+      try {
+        const response = await api.patch(`/books/${bookId}/update`, data);
+        console.log("Response data:",response.data)
+        return response.data;
+      } catch (error: any) {
+        console.error(`Greska pri editovanju knjige sa ID-em ${bookId}:`, error);
+        throw error;
+      }
+    };
 
 export {
     login,

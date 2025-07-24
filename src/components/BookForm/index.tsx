@@ -14,14 +14,19 @@ import InputLabel from '@mui/material/InputLabel'
 import MenuItem from '@mui/material/MenuItem'
 import FormControl from '@mui/material/FormControl'
 import Select from '@mui/material/Select'
-import { Author, BookData, Props } from '../../../types'
+import { Author, BookData, Category, Props, Genre } from '../../../types'
 import {
   checkAuthors,
   checkBookName,
   checkDescription,
   checkQuantity,
 } from '@/utils/utiles'
-import { fetchAllAuthors } from '@/utils/apiService'
+import {
+  fetchAllAuthors,
+  fetchAllCategories,
+  fetchAllGenres,
+} from '@/utils/apiService'
+import { usePathname } from 'next/navigation'
 
 export default function BookForm({
   bookData,
@@ -35,6 +40,8 @@ export default function BookForm({
   const [authorsError, setAuthorsError] = useState<string | null>(null)
   const [descriptionError, setDescriptionError] = useState<string | null>(null)
   const [quantityError, setQuantityError] = useState<string | null>(null)
+  const [dataCategories, setDataCategories] = useState<Category[]>([])
+  const [dataGenres, setDataGenres] = useState<Genre[]>([])
   const [data, setData] = useState<Author[]>([])
 
   useEffect(() => {
@@ -47,10 +54,31 @@ export default function BookForm({
       }
     }
 
+    const loadCategories = async () => {
+      try {
+        const categories = await fetchAllCategories(20)
+        setDataCategories(categories.categories.data)
+      } catch (error) {
+        console.error('Greška prilikom učitavanja kategorija:', error)
+      }
+    }
+
+    const loadGenres = async () => {
+      try {
+        const genres = await fetchAllGenres(20)
+        setDataGenres(genres.genres.data)
+      } catch (error) {
+        console.error('Greška prilikom učitavanja zanrova:', error)
+      }
+    }
+
+    loadGenres()
     loadAuthors()
+    loadCategories()
   }, [])
 
-  console.log('Data:', data)
+  console.log('Genres:', dataGenres)
+  console.log('Categories: ', dataCategories)
 
   let names: string[] = []
   if (data && data.length > 0) {
@@ -149,36 +177,32 @@ export default function BookForm({
         helperText={submitted && descriptionError ? descriptionError : ''}
       />
       <FormControl sx={{ minWidth: 120 }} className="mb-3">
-        <InputLabel id="demo-simple-select-helper-label">
-          Izaberite kategoriju
-        </InputLabel>
+        <InputLabel id="category-select-label">Izaberite kategoriju</InputLabel>
         <Select
-          labelId="demo-simple-select-helper-label"
-          id="demo-simple-select-helper"
-          value={bookData.categories && bookData.categories}
-          label="kategorija"
+          labelId="category-select-label"
+          id="category-select"
           multiple
+          value={bookData.categories || []}
+          label="kategorija"
           onChange={(e) => {
             const {
               target: { value },
             } = e
 
-            const updatedCategories =
-              typeof value === 'string' ? value.split(',') : value
-            setBookData((pre: BookData) => ({
-              ...pre,
-              categories: updatedCategories,
+            setBookData((prev: BookData) => ({
+              ...prev,
+              categories: typeof value === 'string' ? value.split(',') : value,
             }))
           }}
         >
-          <MenuItem value="">
-            <em>None</em>
-          </MenuItem>
-          <MenuItem value={10}>Ten</MenuItem>
-          <MenuItem value={20}>Twenty</MenuItem>
-          <MenuItem value={30}>Thirty</MenuItem>
+          {dataCategories.map((category) => (
+            <MenuItem key={category.id} value={category.id}>
+              {category.name}
+            </MenuItem>
+          ))}
         </Select>
       </FormControl>
+
       <FormControl sx={{ minWidth: 120 }} className="mb-3">
         <InputLabel id="demo-simple-select-helper-label">
           Izaberite zanr
@@ -202,12 +226,13 @@ export default function BookForm({
             }))
           }}
         >
-          <MenuItem value="">
-            <em>None</em>
-          </MenuItem>
-          <MenuItem value={10}>Ten</MenuItem>
-          <MenuItem value={20}>Twenty</MenuItem>
-          <MenuItem value={30}>Thirty</MenuItem>
+          {dataGenres.map((genre) => {
+            return (
+              <MenuItem key={genre.id} value={genre.id}>
+                {genre.name}
+              </MenuItem>
+            )
+          })}
         </Select>
       </FormControl>
       <FormControl className="mb-3" error={submitted && !!authorsError}>

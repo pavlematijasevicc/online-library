@@ -363,7 +363,7 @@ export default function PublishedBooksTable() {
     )
   } else
     return (
-      <Box sx={{ width: '1200px' }} className="ml-4">
+      <Box sx={{ width: '1150px' }} className="ml-4">
         <Paper sx={{ width: '100%', mb: 2 }}>
           <EnhancedTableToolbar numSelected={selected.length} />
           <TableContainer>

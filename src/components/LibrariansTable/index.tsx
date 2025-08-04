@@ -19,7 +19,7 @@ import Tooltip from '@mui/material/Tooltip'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { visuallyHidden } from '@mui/utils'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
-import { deleteBook, getAllBooks } from '@/utils/apiService'
+import { deleteBook, deleteUser, getAllBooks } from '@/utils/apiService'
 import Link from 'next/link'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined'
@@ -28,22 +28,15 @@ import CircularProgress from '@mui/material/CircularProgress'
 import { Avatar, Button, TextField } from '@mui/material'
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
 import { getComparator, Order } from '@/utils/utiles'
-import HistoryEduOutlinedIcon from '@mui/icons-material/HistoryEduOutlined'
-import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined'
-import EventAvailableIcon from '@mui/icons-material/EventAvailable'
-import AssignmentReturnOutlinedIcon from '@mui/icons-material/AssignmentReturnOutlined'
+import { getAllStudents } from '@/utils/apiService' // ili odgovarajuća putanja
 
 interface Data {
+  username: string
   id: number
   image: string
-  name: string // Naziv knjige
-  author: string
-  category: string
-  available: number
-  reserved: number
-  issued: number
-  overdue: number
-  total: number
+  fullName: string
+  email: string
+  lastAccess: string
 }
 
 interface HeadCell {
@@ -55,52 +48,28 @@ interface HeadCell {
 
 const headCells: readonly HeadCell[] = [
   {
-    id: 'name',
+    id: 'fullName',
     numeric: false,
     disablePadding: false,
-    label: 'Naziv Knjige',
+    label: 'Ime i Prezime',
   },
   {
-    id: 'author',
+    id: 'email',
     numeric: false,
     disablePadding: false,
-    label: 'Autor',
+    label: 'Email',
   },
   {
-    id: 'category',
+    id: 'userType' as keyof Data,
     numeric: false,
     disablePadding: false,
-    label: 'Kategorija',
+    label: 'Tip korisnika',
   },
   {
-    id: 'available',
-    numeric: true,
+    id: 'lastAccess',
+    numeric: false,
     disablePadding: false,
-    label: 'Na raspolaganju',
-  },
-  {
-    id: 'reserved',
-    numeric: true,
-    disablePadding: false,
-    label: 'Rezervisano',
-  },
-  {
-    id: 'issued',
-    numeric: true,
-    disablePadding: false,
-    label: 'Izdato',
-  },
-  {
-    id: 'overdue',
-    numeric: true,
-    disablePadding: false,
-    label: 'U prekoračenju',
-  },
-  {
-    id: 'total',
-    numeric: true,
-    disablePadding: false,
-    label: 'Ukupna količina',
+    label: 'Zadnji pristup',
   },
 ]
 
@@ -147,7 +116,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
             sx={{
-              fontWeight: headCell.id === 'name' ? 'bold' : 'normal',
+              fontWeight: headCell.id === 'fullName' ? 'bold' : 'normal',
             }}
           >
             <TableSortLabel
@@ -171,12 +140,16 @@ function EnhancedTableHead(props: EnhancedTableProps) {
     </TableHead>
   )
 }
+
 interface EnhancedTableToolbarProps {
   numSelected: number
+  onBulkDeleteClick: () => void
 }
 
-function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
-  const { numSelected } = props
+function EnhancedTableToolbar({
+  numSelected,
+  onBulkDeleteClick,
+}: EnhancedTableToolbarProps) {
   return numSelected > 0 ? (
     <Toolbar
       sx={[
@@ -199,91 +172,85 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
         variant="subtitle1"
         component="div"
       >
-        Izbrisi {numSelected} autora
+        Izbrisi {numSelected} bibliotekara
       </Typography>
 
       <Tooltip title="Izbrisi">
-        <IconButton>
+        <IconButton onClick={onBulkDeleteClick}>
           <DeleteIcon />
         </IconButton>
       </Tooltip>
     </Toolbar>
   ) : null
 }
-export default function EnhancedTable() {
+
+export default function LibrariansTable() {
   const [order, setOrder] = React.useState<Order>('asc')
-  const [orderBy, setOrderBy] = React.useState<keyof Data>('name')
+  const [orderBy, setOrderBy] = React.useState<keyof Data>('fullName')
   const [selected, setSelected] = React.useState<readonly number[]>([])
   const [page, setPage] = React.useState(0)
   const [rowsPerPage, setRowsPerPage] = React.useState(5)
   const [data, setData] = useState<Data[]>([])
 
   useEffect(() => {
-    const fetchBooks = async () => {
+    const fetchStudents = async () => {
       setLoading(true)
       try {
-        const response = await getAllBooks(20, '')
-        console.log('Response:', response)
-        const fetchedBooks = response.books.data
+        const response = await getAllStudents(50, '', 2)
 
-        const mapped: Data[] = fetchedBooks.map((book: any, index: number) => ({
-          id: book.id ?? `${book.name}_${index}`, // jedinstveni ID
-          image: book.image ?? '',
-          name: book.name ?? '',
-          author: Array.isArray(book.authors)
-            ? book.authors
-                .map((a: any) =>
-                  `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim()
-                )
-                .join(', ')
-            : '',
-          category: Array.isArray(book.categories)
-            ? book.categories.map((c: any) => c.name).join(', ')
-            : '',
-          available: book.number_of_copies_available - 0,
-          reserved: 0,
-          issued: 0,
-          overdue: 0,
-          total: book.number_of_copies_available,
+        const fetchedStudents = response.data.data || []
+
+        const mapped: Data[] = fetchedStudents.map((student: any) => ({
+          id: student.id,
+          username: student.username, // Dodaj ovo
+          image: student.image || '',
+          fullName: `${student.first_name || ''} ${
+            student.last_name || ''
+          }`.trim(),
+          email: student.email || '',
+          lastAccess: student.last_access || 'Prije 8 dana',
         }))
 
-        // Filtriraj duplikate po imenu
-        const seen = new Set()
-        const uniqueBooks = mapped.filter((book) => {
-          if (seen.has(book.name)) return false
-          seen.add(book.name)
-          return true
-        })
-
-        setData(uniqueBooks)
-      } catch (err) {
-        console.error(err)
-        setError('Greška pri dohvaćanju knjiga.')
+        setData(mapped)
+      } catch (error) {
+        setError('Greška pri učitavanju učenika.')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchBooks()
+    fetchStudents()
   }, [])
 
-  console.log('knjige:', data)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [openMenu, setOpenMenu] = useState<number | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [bookToDelete, setBookToDelete] = useState<number | null>(null)
+  const [userToDelete, setUserToDelete] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const inputRef = React.useRef<HTMLInputElement>(null)
 
-  const handleDeleteBook = async (id: number) => {
+  const handleDeleteUser = async (id: number) => {
     try {
-      await deleteBook(id)
+      await deleteUser(id)
       setShowDeleteModal(false)
-      setBookToDelete(null)
-      window.location.reload()
+      setUserToDelete(null)
+      location.reload()
     } catch (err) {
-      alert('Greška pri brisanju knjige.')
+      alert('Greška pri brisanju korisnika.')
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    try {
+      for (const id of selected) {
+        await deleteUser(id)
+      }
+      setSelected([])
+      setShowDeleteModal(false)
+      location.reload()
+    } catch (err) {
+      alert('Greška pri brisanju korisnika.')
     }
   }
 
@@ -296,20 +263,18 @@ export default function EnhancedTable() {
   }
 
   const deleteConfirmation = (id: number) => {
-    setBookToDelete(id)
+    setUserToDelete(id) // možeš kasnije precizirati tip
     setShowDeleteModal(true)
     closeMenu()
   }
 
   const closeDeleteModal = () => {
-    setBookToDelete(null)
+    setUserToDelete(null)
     setShowDeleteModal(false)
   }
 
-  let rows = data.filter(
-    (row) =>
-      row.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      row.author.toLowerCase().includes(searchQuery.toLowerCase())
+  let rows = data.filter((row) =>
+    row.fullName.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const handleRequestSort = (
@@ -407,11 +372,11 @@ export default function EnhancedTable() {
   } else
     return (
       <Box sx={{ width: '100%' }}>
-        <Box className="absolute -mt-14 ml-400 flex items-center justify-center">
+        <Box className="absolute -mt-14 ml-385 flex items-center justify-center">
           <TextField
             inputRef={inputRef}
-            className="text-sm font-normal pt-1 height-[30px] pr-0 m-0 w-[140px]"
-            label="Pretrazi knjige.."
+            className="text-sm font-normal pt-1 height-[30px] pr-0 m-0 w-[180px]"
+            label="Pretrazi bibliotekare.."
             variant="outlined"
             size="small"
             value={searchQuery}
@@ -431,7 +396,14 @@ export default function EnhancedTable() {
           />
         </Box>
         <Paper sx={{ width: '100%', mb: 2 }}>
-          <EnhancedTableToolbar numSelected={selected.length} />
+          <EnhancedTableToolbar
+            numSelected={selected.length}
+            onBulkDeleteClick={() => {
+              setUserToDelete(null) // znači masovno brisanje
+              setShowDeleteModal(true)
+            }}
+          />
+
           <TableContainer>
             <Table
               sx={{
@@ -468,9 +440,9 @@ export default function EnhancedTable() {
                       selected={isItemSelected}
                       sx={{ cursor: 'pointer' }}
                     >
+                      {/* ✅ Checkbox */}
                       <TableCell padding="checkbox">
                         <Checkbox
-                          sx={{ verticalAlign: 'middle' }}
                           color="primary"
                           checked={isItemSelected}
                           onChange={(event) => handleClick(event, row.id)}
@@ -480,7 +452,7 @@ export default function EnhancedTable() {
                         />
                       </TableCell>
 
-                      {/* Prva kolona: Slika i ime knjige */}
+                      {/* 🧑‍🎓 Ime i Prezime + Avatar */}
                       <TableCell
                         component="th"
                         id={labelId}
@@ -490,28 +462,28 @@ export default function EnhancedTable() {
                           display: 'flex',
                           alignItems: 'center',
                           gap: 2,
-                          py: 2, // standardna visina reda
-                          borderBottom: '1px solid rgba(224, 224, 224, 1)', // dodatna sigurnost
+                          py: 2,
                         }}
                       >
                         <Avatar
-                          alt={row.name}
+                          alt={row.fullName}
                           src={row.image}
-                          sx={{ width: 32, height: 32, marginRight: 1 }}
-                          variant="square"
+                          sx={{ width: 32, height: 32 }}
                         />
-                        {row.name}
+                        {row.fullName}
                       </TableCell>
 
-                      {/* Ostale kolone */}
-                      <TableCell align="left">{row.author}</TableCell>
-                      <TableCell align="left">{row.category}</TableCell>
-                      <TableCell align="left">{row.available}</TableCell>
-                      <TableCell align="left">{row.reserved}</TableCell>
-                      <TableCell align="left">{row.issued}</TableCell>
-                      <TableCell align="left">{row.overdue}</TableCell>
-                      <TableCell align="left">{row.total}</TableCell>
-                      <TableCell align="left">
+                      {/* 📧 Email */}
+                      <TableCell align="left">{row.email}</TableCell>
+
+                      {/* 👤 Tip korisnika */}
+                      <TableCell align="left">Bibliotekar</TableCell>
+
+                      {/* ⏰ Zadnji pristup */}
+                      <TableCell align="left">{row.lastAccess}</TableCell>
+
+                      {/* ⋮ Meni ikonica */}
+                      <TableCell align="right">
                         <div
                           onClick={
                             openMenu === index
@@ -527,8 +499,9 @@ export default function EnhancedTable() {
                               className="fixed inset-0 bg-transparent"
                               onClick={() => setOpenMenu(null)}
                             ></div>
-                            <div className="absolute w-[320px] -ml-80 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
-                              <Link href={`/books/${row.id}`}>
+
+                            <div className="absolute w-[200px] -ml-40 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
+                              <Link href={`/librarians/${row.username}`}>
                                 <div className="capitalize px-4 py-3 flex items-center">
                                   <CreateOutlinedIcon
                                     sx={{
@@ -537,58 +510,19 @@ export default function EnhancedTable() {
                                     }}
                                     className="mr-1"
                                   />
-                                  Izmjeni knjigu
+                                  Izmjeni korisnika
                                 </div>
                               </Link>
                               <div
                                 className="capitalize px-4 py-3 flex items-center hover:cursor-pointer"
-                                onClick={() => deleteConfirmation(row.id)}
+                                onClick={() => deleteConfirmation(row.id)} // ← izmena ovde
                               >
                                 <DeleteOutlineIcon
-                                  sx={{
-                                    width: '20px',
-                                    height: '20px',
-                                  }}
+                                  sx={{ width: 20, height: 20 }}
                                   className="mr-1"
                                 />
-                                Izbrisi knjigu
+                                Izbriši korisnika
                               </div>
-                              <Link href={`books/${row.id}/write-of-the-book`}>
-                                <div className="capitalize px-4 py-3 flex items-center hover:cursor-pointer">
-                                  <HistoryEduOutlinedIcon
-                                    sx={{ width: '18px', height: '18px' }}
-                                    className="mr-1"
-                                  />
-                                  <span> Otpisi knjigu </span>
-                                </div>
-                              </Link>
-                              <Link href={`books/${row.id}/issue-book`}>
-                                <div className="capitalize px-4 py-3 flex items-center hover:cursor-pointer">
-                                  <WavingHandOutlinedIcon
-                                    sx={{ width: '18px', height: '18px' }}
-                                    className="mr-1"
-                                  />
-                                  <span> Izdaj knjigu </span>
-                                </div>
-                              </Link>
-                              <Link href={`books/${row.id}/return-the-book`}>
-                                <div className="capitalize px-4 py-3 flex items-center hover:cursor-pointer">
-                                  <AssignmentReturnOutlinedIcon
-                                    sx={{ width: '18px', height: '18px' }}
-                                    className="mr-1"
-                                  />
-                                  <span> Vrati knjigu </span>
-                                </div>
-                              </Link>
-                              <Link href={`books/${row.id}/reserve-the-book`}>
-                                <div className="capitalize px-4 py-3 flex items-center hover:cursor-pointer">
-                                  <EventAvailableIcon
-                                    sx={{ width: '18px', height: '18px' }}
-                                    className="mr-1"
-                                  />
-                                  <span> Rezervisi knjigu </span>
-                                </div>
-                              </Link>
                             </div>
                           </>
                         )}
@@ -596,16 +530,6 @@ export default function EnhancedTable() {
                     </TableRow>
                   )
                 })}
-
-                {emptyRows > 0 && (
-                  <TableRow
-                    style={{
-                      height: 53 * emptyRows,
-                    }}
-                  >
-                    <TableCell colSpan={6} />
-                  </TableRow>
-                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -621,21 +545,25 @@ export default function EnhancedTable() {
         </Paper>
         {showDeleteModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Overlay */}
             <div
               className="fixed inset-0 bg-black opacity-50"
               onClick={closeDeleteModal}
             ></div>
 
-            {/* Modal box */}
             <div className="z-50 bg-white p-6 rounded-xl shadow-lg w-[320px] relative text-center">
               <p className="text-gray-800 text-base font-medium mb-6">
-                Da li ste sigurni da želite da izbrišete knjigu?
+                {userToDelete !== null
+                  ? 'Da li ste sigurni da želite da izbrišete korisnika?'
+                  : `Da li ste sigurni da želite da izbrišete ${selected.length} korisnika?`}
               </p>
               <div className="flex justify-between">
                 <button
                   onClick={() => {
-                    if (bookToDelete !== null) handleDeleteBook(bookToDelete)
+                    if (userToDelete !== null) {
+                      handleDeleteUser(userToDelete)
+                    } else {
+                      handleBulkDelete()
+                    }
                   }}
                   className="uppercase w-[124px] text-sm font-medium py-2 px-4 bg-blue text-white rounded hover:bg-blue-500 transition-colors duration-200 hover:cursor-pointer"
                 >

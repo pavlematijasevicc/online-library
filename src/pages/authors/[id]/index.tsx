@@ -171,7 +171,9 @@ export default function ShowAuthor() {
               {data.first_name} {data.last_name}
             </h1>
             <div className="mt-1 text-xs font-normal">
-              <span className="text-blue">Evidencija autora</span>
+              <Link href={'/authors'}>
+                <span className="text-blue">Evidencija autora</span>
+              </Link>
               <span> / </span>
               <span className="text-blue">ID-{data.id}</span>
             </div>

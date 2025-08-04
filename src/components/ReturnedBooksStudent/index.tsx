@@ -19,7 +19,7 @@ import Tooltip from '@mui/material/Tooltip'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { visuallyHidden } from '@mui/utils'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
-import { deleteBook, getAllBooks } from '@/utils/apiService'
+import { deleteAuthor, fetchAllAuthors } from '@/utils/apiService'
 import Link from 'next/link'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined'
@@ -28,22 +28,15 @@ import CircularProgress from '@mui/material/CircularProgress'
 import { Avatar, Button, TextField } from '@mui/material'
 import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
 import { getComparator, Order } from '@/utils/utiles'
-import HistoryEduOutlinedIcon from '@mui/icons-material/HistoryEduOutlined'
-import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined'
-import EventAvailableIcon from '@mui/icons-material/EventAvailable'
-import AssignmentReturnOutlinedIcon from '@mui/icons-material/AssignmentReturnOutlined'
 
 interface Data {
   id: number
-  image: string
-  name: string // Naziv knjige
-  author: string
-  category: string
-  available: number
-  reserved: number
-  issued: number
-  overdue: number
-  total: number
+  bookTitle: string
+  bookImage: string
+  issueDate: string
+  returnDate: string
+  retentionStatus: string
+  receivedBy: string
 }
 
 interface HeadCell {
@@ -55,52 +48,34 @@ interface HeadCell {
 
 const headCells: readonly HeadCell[] = [
   {
-    id: 'name',
+    id: 'bookTitle',
     numeric: false,
     disablePadding: false,
-    label: 'Naziv Knjige',
+    label: 'Naziv knjige',
   },
   {
-    id: 'author',
+    id: 'issueDate',
     numeric: false,
     disablePadding: false,
-    label: 'Autor',
+    label: 'Datum izdavanja',
   },
   {
-    id: 'category',
+    id: 'returnDate',
     numeric: false,
     disablePadding: false,
-    label: 'Kategorija',
+    label: 'Datum vraćanja',
   },
   {
-    id: 'available',
-    numeric: true,
+    id: 'retentionStatus',
+    numeric: false,
     disablePadding: false,
-    label: 'Na raspolaganju',
+    label: 'Zadržavanje knjige',
   },
   {
-    id: 'reserved',
-    numeric: true,
+    id: 'receivedBy',
+    numeric: false,
     disablePadding: false,
-    label: 'Rezervisano',
-  },
-  {
-    id: 'issued',
-    numeric: true,
-    disablePadding: false,
-    label: 'Izdato',
-  },
-  {
-    id: 'overdue',
-    numeric: true,
-    disablePadding: false,
-    label: 'U prekoračenju',
-  },
-  {
-    id: 'total',
-    numeric: true,
-    disablePadding: false,
-    label: 'Ukupna količina',
+    label: 'Knjigu primio',
   },
 ]
 
@@ -147,7 +122,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
             sx={{
-              fontWeight: headCell.id === 'name' ? 'bold' : 'normal',
+              fontWeight: 'normal',
             }}
           >
             <TableSortLabel
@@ -210,83 +185,87 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
     </Toolbar>
   ) : null
 }
-export default function EnhancedTable() {
+const calculateRetentionStatus = (
+  issueDate: string,
+  returnDate: string
+): string => {
+  const start = new Date(issueDate)
+  const end = new Date(returnDate)
+
+  const diffTime = Math.abs(end.getTime() - start.getTime())
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+  const weeks = Math.floor(diffDays / 7)
+  const days = diffDays % 7
+
+  if (weeks > 0 && days > 0) return `${weeks} nedelje i ${days} dana`
+  if (weeks > 0) return `${weeks} nedelje`
+  return `${days} dana`
+}
+
+export default function ReturnedBooksStudent() {
   const [order, setOrder] = React.useState<Order>('asc')
-  const [orderBy, setOrderBy] = React.useState<keyof Data>('name')
+  const [orderBy, setOrderBy] = React.useState<keyof Data>('bookTitle')
   const [selected, setSelected] = React.useState<readonly number[]>([])
   const [page, setPage] = React.useState(0)
   const [rowsPerPage, setRowsPerPage] = React.useState(5)
-  const [data, setData] = useState<Data[]>([])
+  const [data, setData] = useState<Data[]>([
+    {
+      id: 1,
+      bookTitle: 'Mali Princ',
+      bookImage: 'https://picsum.photos/seed/malip/60/90',
+      issueDate: '2025-06-01',
+      returnDate: '2025-06-15',
+      retentionStatus: calculateRetentionStatus('2025-06-01', '2025-06-15'),
+      receivedBy: 'Milena Petrović',
+    },
+    {
+      id: 2,
+      bookTitle: '1984',
+      bookImage: 'https://picsum.photos/seed/orwell1984/60/90',
+      issueDate: '2025-05-25',
+      returnDate: '2025-06-05',
+      retentionStatus: calculateRetentionStatus('2025-05-25', '2025-06-05'),
+      receivedBy: 'Nikola Jovanović',
+    },
+    {
+      id: 3,
+      bookTitle: 'Zločin i kazna',
+      bookImage: 'https://picsum.photos/seed/dostojevski/60/90',
+      issueDate: '2025-06-10',
+      returnDate: '2025-06-20',
+      retentionStatus: calculateRetentionStatus('2025-06-10', '2025-06-20'),
+      receivedBy: 'Ivana Lukić',
+    },
+  ])
 
-  useEffect(() => {
-    const fetchBooks = async () => {
-      setLoading(true)
-      try {
-        const response = await getAllBooks(20, '')
-        console.log('Response:', response)
-        const fetchedBooks = response.books.data
-
-        const mapped: Data[] = fetchedBooks.map((book: any, index: number) => ({
-          id: book.id ?? `${book.name}_${index}`, // jedinstveni ID
-          image: book.image ?? '',
-          name: book.name ?? '',
-          author: Array.isArray(book.authors)
-            ? book.authors
-                .map((a: any) =>
-                  `${a.first_name ?? ''} ${a.last_name ?? ''}`.trim()
-                )
-                .join(', ')
-            : '',
-          category: Array.isArray(book.categories)
-            ? book.categories.map((c: any) => c.name).join(', ')
-            : '',
-          available: book.number_of_copies_available - 0,
-          reserved: 0,
-          issued: 0,
-          overdue: 0,
-          total: book.number_of_copies_available,
-        }))
-
-        // Filtriraj duplikate po imenu
-        const seen = new Set()
-        const uniqueBooks = mapped.filter((book) => {
-          if (seen.has(book.name)) return false
-          seen.add(book.name)
-          return true
-        })
-
-        setData(uniqueBooks)
-      } catch (err) {
-        console.error(err)
-        setError('Greška pri dohvaćanju knjiga.')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchBooks()
-  }, [])
-
-  console.log('knjige:', data)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
   const [openMenu, setOpenMenu] = useState<number | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [bookToDelete, setBookToDelete] = useState<number | null>(null)
+  const [authorToDelete, setAuthorToDelete] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const inputRef = React.useRef<HTMLInputElement>(null)
 
-  const handleDeleteBook = async (id: number) => {
-    try {
-      await deleteBook(id)
-      setShowDeleteModal(false)
-      setBookToDelete(null)
-      window.location.reload()
-    } catch (err) {
-      alert('Greška pri brisanju knjige.')
-    }
-  }
-
+  /*useEffect(() => {
+        const loadAuthors = async () => {
+          setLoading(true)
+          try {
+            const authors = await fetchAllAuthors(20)
+            setData(authors.data.data)
+          } catch (error) {
+            console.error('Greška prilikom učitavanja autora:', error)
+            setError('Nije moguće učitati autore. Pokušajte ponovo kasnije.')
+          } finally {
+            setLoading(false)
+          }
+        }
+    
+        loadAuthors()
+      }, [])
+    
+      console.log('Data:', data)
+    */
   function toggleMenu(id: number | null) {
     setOpenMenu(id)
   }
@@ -295,21 +274,31 @@ export default function EnhancedTable() {
     setOpenMenu(null)
   }
 
+  const handleDeleteAuthor = async (id: number) => {
+    try {
+      await deleteAuthor(id)
+      setShowDeleteModal(false)
+      setAuthorToDelete(null)
+      window.location.reload()
+    } catch (err) {
+      alert('Greška pri brisanju autora.')
+    }
+  }
+
   const deleteConfirmation = (id: number) => {
-    setBookToDelete(id)
+    setAuthorToDelete(id)
     setShowDeleteModal(true)
     closeMenu()
   }
 
   const closeDeleteModal = () => {
-    setBookToDelete(null)
+    setAuthorToDelete(null)
     setShowDeleteModal(false)
   }
-
   let rows = data.filter(
     (row) =>
-      row.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      row.author.toLowerCase().includes(searchQuery.toLowerCase())
+      row.bookTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      row.receivedBy.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const handleRequestSort = (
@@ -406,30 +395,7 @@ export default function EnhancedTable() {
     )
   } else
     return (
-      <Box sx={{ width: '100%' }}>
-        <Box className="absolute -mt-14 ml-400 flex items-center justify-center">
-          <TextField
-            inputRef={inputRef}
-            className="text-sm font-normal pt-1 height-[30px] pr-0 m-0 w-[140px]"
-            label="Pretrazi knjige.."
-            variant="outlined"
-            size="small"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '& fieldset': {
-                  border: 'none',
-                },
-                height: 36,
-              },
-            }}
-          />
-          <SearchOutlinedIcon
-            className="text-grey-text hover:cursor-pointer"
-            onClick={handleIconClick}
-          />
-        </Box>
+      <Box sx={{ width: '1470px' }} className="ml-4">
         <Paper sx={{ width: '100%', mb: 2 }}>
           <EnhancedTableToolbar numSelected={selected.length} />
           <TableContainer>
@@ -464,7 +430,7 @@ export default function EnhancedTable() {
                       role="checkbox"
                       aria-checked={isItemSelected}
                       tabIndex={-1}
-                      key={row.id}
+                      key={row.bookTitle}
                       selected={isItemSelected}
                       sx={{ cursor: 'pointer' }}
                     >
@@ -479,39 +445,30 @@ export default function EnhancedTable() {
                           }}
                         />
                       </TableCell>
-
-                      {/* Prva kolona: Slika i ime knjige */}
-                      <TableCell
-                        component="th"
-                        id={labelId}
-                        scope="row"
-                        padding="none"
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 2,
-                          py: 2, // standardna visina reda
-                          borderBottom: '1px solid rgba(224, 224, 224, 1)', // dodatna sigurnost
-                        }}
-                      >
-                        <Avatar
-                          alt={row.name}
-                          src={row.image}
-                          sx={{ width: 32, height: 32, marginRight: 1 }}
-                          variant="square"
-                        />
-                        {row.name}
-                      </TableCell>
-
-                      {/* Ostale kolone */}
-                      <TableCell align="left">{row.author}</TableCell>
-                      <TableCell align="left">{row.category}</TableCell>
-                      <TableCell align="left">{row.available}</TableCell>
-                      <TableCell align="left">{row.reserved}</TableCell>
-                      <TableCell align="left">{row.issued}</TableCell>
-                      <TableCell align="left">{row.overdue}</TableCell>
-                      <TableCell align="left">{row.total}</TableCell>
                       <TableCell align="left">
+                        <Box display="flex" alignItems="center">
+                          <img
+                            src={row.bookImage}
+                            alt={row.bookTitle}
+                            style={{
+                              width: 40,
+                              height: 60,
+                              objectFit: 'cover',
+                              marginRight: 12,
+                              borderRadius: 4,
+                            }}
+                          />
+                          <Typography variant="body2">
+                            {row.bookTitle}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="left">{row.issueDate}</TableCell>
+                      <TableCell align="left">{row.returnDate}</TableCell>
+                      <TableCell align="left">{row.retentionStatus}</TableCell>
+                      <TableCell align="left">{row.receivedBy}</TableCell>
+
+                      <TableCell align="right">
                         <div
                           onClick={
                             openMenu === index
@@ -521,7 +478,7 @@ export default function EnhancedTable() {
                         >
                           <MoreVertIcon className="hover:cursor-pointer" />
                         </div>
-                        {openMenu === index && (
+                        {/*openMenu === index && (
                           <>
                             <div
                               className="fixed inset-0 bg-transparent"
@@ -553,45 +510,9 @@ export default function EnhancedTable() {
                                 />
                                 Izbrisi knjigu
                               </div>
-                              <Link href={`books/${row.id}/write-of-the-book`}>
-                                <div className="capitalize px-4 py-3 flex items-center hover:cursor-pointer">
-                                  <HistoryEduOutlinedIcon
-                                    sx={{ width: '18px', height: '18px' }}
-                                    className="mr-1"
-                                  />
-                                  <span> Otpisi knjigu </span>
-                                </div>
-                              </Link>
-                              <Link href={`books/${row.id}/issue-book`}>
-                                <div className="capitalize px-4 py-3 flex items-center hover:cursor-pointer">
-                                  <WavingHandOutlinedIcon
-                                    sx={{ width: '18px', height: '18px' }}
-                                    className="mr-1"
-                                  />
-                                  <span> Izdaj knjigu </span>
-                                </div>
-                              </Link>
-                              <Link href={`books/${row.id}/return-the-book`}>
-                                <div className="capitalize px-4 py-3 flex items-center hover:cursor-pointer">
-                                  <AssignmentReturnOutlinedIcon
-                                    sx={{ width: '18px', height: '18px' }}
-                                    className="mr-1"
-                                  />
-                                  <span> Vrati knjigu </span>
-                                </div>
-                              </Link>
-                              <Link href={`books/${row.id}/reserve-the-book`}>
-                                <div className="capitalize px-4 py-3 flex items-center hover:cursor-pointer">
-                                  <EventAvailableIcon
-                                    sx={{ width: '18px', height: '18px' }}
-                                    className="mr-1"
-                                  />
-                                  <span> Rezervisi knjigu </span>
-                                </div>
-                              </Link>
                             </div>
                           </>
-                        )}
+                        )*/}
                       </TableCell>
                     </TableRow>
                   )
@@ -619,38 +540,6 @@ export default function EnhancedTable() {
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Paper>
-        {showDeleteModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Overlay */}
-            <div
-              className="fixed inset-0 bg-black opacity-50"
-              onClick={closeDeleteModal}
-            ></div>
-
-            {/* Modal box */}
-            <div className="z-50 bg-white p-6 rounded-xl shadow-lg w-[320px] relative text-center">
-              <p className="text-gray-800 text-base font-medium mb-6">
-                Da li ste sigurni da želite da izbrišete knjigu?
-              </p>
-              <div className="flex justify-between">
-                <button
-                  onClick={() => {
-                    if (bookToDelete !== null) handleDeleteBook(bookToDelete)
-                  }}
-                  className="uppercase w-[124px] text-sm font-medium py-2 px-4 bg-blue text-white rounded hover:bg-blue-500 transition-colors duration-200 hover:cursor-pointer"
-                >
-                  Potvrdi
-                </button>
-                <button
-                  onClick={closeDeleteModal}
-                  className="uppercase w-[124px] bg-blue text-sm font-medium py-2 px-4 text-white rounded hover:cursor-pointer  hover:bg-blue-500 transition-colors duration-200"
-                >
-                  Poništi
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </Box>
     )
 }

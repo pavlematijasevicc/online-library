@@ -1,4 +1,4 @@
-import { ApiResponse, BookData, FetchAuthorResponse, FetchBookResponse, logInData, NewAuthorData } from "../../types";
+import { ApiResponse, BookData, FetchAuthorResponse, FetchBookResponse, logInData, NewAuthorData, Student } from "../../types";
 import api from "./axios";
 
 export const get = async(
@@ -172,6 +172,104 @@ export const fetchAllCategories = async (perPage = 20) => {
         throw error;
       }
     };
+
+ export const createStudent = async (data: Student) => {
+  const formData = new FormData();
+
+  formData.append('first_name', data.first_name);
+  formData.append('last_name', data.last_name);
+  formData.append('email', data.email);
+  formData.append('username', data.username);
+  formData.append('jmbg', data.jmbg);
+  formData.append('role_id', String(data.role_id ?? ''));
+  formData.append('password', data.password);
+
+  if (data.profile_picture) {
+    formData.append('profile_picture', data.profile_picture);
+  }
+
+  const response = await api.post('/create', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data;
+};
+
+
+export async function getAllStudents(perPage = 20, searchValue = '', role_id= 1) {
+  try {
+    const response = await api.get('/users', {
+      params: {
+        role_id,
+        per_page: perPage,
+        search_value: searchValue
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Greška prilikom ispisivanja studenata:', error);
+    throw error;
+  }
+}
+
+
+export const deleteUser = async (id: number): Promise<any> => {
+  try {
+    const response = await api.delete('/users', {
+      data: {
+        users_id: [id], 
+      },
+    });
+
+    console.log(`Korisnik sa ID-em: ${id} je obrisan.`);
+    return response.data;
+  } catch (error: any) {
+    console.error(`Greška pri brisanju korisnika sa ID-em ${id}:`, error);
+    throw error;
+  }
+};
+
+
+export const viewUser= async (username: string):Promise<Student[]>=>{
+  try{
+    const response=await api.get(`users/${username}`);
+    console.log(`Korisnik sa username-om: ${username} je prikazan.`);
+    return response.data;
+  }catch(error:any){
+    console.error(`Greška pri prikazivanju korisnika sa username-om: ${username}:`, error);
+    throw error;
+  }
+}
+
+export const editUser = async (
+     username:string,
+     data: Student
+    ): Promise<Student> => {
+      try {
+        const response = await api.patch(`/${username}/update`, data);
+        console.log("Response data:",response.data)
+        return response.data;
+      } catch (error: any) {
+        console.error(`Greska pri editovanju ucenika sa username-om: ${username}:`, error);
+        throw error;
+      }
+    };
+    
+export const createLibrarian = async (data: Student) => {
+  console.log('data to send:',data)
+
+  const response = await api.post('/create', data, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data;
+};
+
+
 
 export {
     login,

@@ -85,9 +85,14 @@ export default function WriteOfTheBook() {
           <div className="flex flex-col">
             <h1 className="capitalize"> {data?.name} </h1>
             <div className="mt-1 text-xs font-normal">
-              <span className="text-blue">Evidencija knjiga</span>
+              <Link href={'/books'}>
+                <span className="text-blue">Evidencija knjiga</span>
+              </Link>
               <span> /</span>
-              <span className="uppercase text-blue"> knjiga-{id}</span>
+              <Link href={`/books/${id}`}>
+                <span className="uppercase text-blue"> knjiga-{id}</span>
+              </Link>
+
               <span> /</span>
               <span className="capitalize text-blue"> otpisi knjigu</span>
             </div>

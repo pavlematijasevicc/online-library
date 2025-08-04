@@ -7,7 +7,7 @@ export default function Authors() {
     <div className="px-4 py-6 text-xl font-medium">
       <h1> Autori </h1>
       <Link href="/authors/new-author">
-        <Button className="uppercase text-white bg-blue flex items-center text-sm font-medium mt-10 mb-4">
+        <Button className="uppercase text-white bg-blue flex items-center text-sm font-medium mt-11 mb-7">
           <AddIcon className="mr-2" /> novi autor
         </Button>
       </Link>

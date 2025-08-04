@@ -1,15 +1,27 @@
 export function checkEmail(email: string): string | null {
-  
-  const errors = [];
-    if (email.length === 0) 
-        {
-            return 'Unijeli ste prazan email!!!';
-        }
-        const emailRegex = /^[^\s@]+@[^\s@]+.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-        return "Email nije u ispravnom formatu.";
-} else
-return ""
+  if (email.trim().length === 0) {
+    return 'Morate unijeti email!';
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return 'Email nije u ispravnom formatu.';
+  }
+
+  return null; // validan email
+}
+
+export default function checkJmbg(jmbg: string):string | null{
+
+  if(jmbg.length===0){
+    return "Morate unijeti JMBG!";
+  }
+
+  if (!/^\d{13}$/.test(jmbg)) {
+    return "JMBG mora sadrzati samo cifre bez drugih oznaka!";
+  }
+
+  return null; // Sve je u redu
 }
 
 
@@ -53,6 +65,15 @@ export function checkIme(ime: string): string | null {
   return null;
 }
 
+export function checkUsername(username: string):string | null{
+  const errors: string[]=[];
+
+  if(username.length===0){
+    errors.push('Morate unijeti username!');
+    return  `${errors}`
+    }
+  return null;
+}
 
 export function checkPrezime(prezime: string): string | null {
   const errors: string[] = [];

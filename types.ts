@@ -1,3 +1,5 @@
+import { Dispatch, SetStateAction } from "react";
+
 export type ApiResponse={
     message:string,
     access_token: string,
@@ -73,3 +75,21 @@ export interface NewAuthorData {
     setValue: React.Dispatch<React.SetStateAction<string>>
     nameInputRef:  React.RefObject<HTMLInputElement | null>
   }
+
+export interface Student {
+  id?:number
+  first_name: string
+  last_name: string
+  email: string
+  username: string
+  jmbg: string
+  role_id: number | null
+  password: string
+  profile_picture?: File | null
+}
+
+export type StudentProps={
+  data?: Student,
+  setData?: Dispatch<SetStateAction<Student | undefined>>,
+  nameInputRef:React.RefObject<HTMLInputElement | null>
+}

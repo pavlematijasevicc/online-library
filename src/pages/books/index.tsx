@@ -12,9 +12,9 @@ export default function Books() {
     <div className="px-4 py-6 text-xl font-medium">
       <h1> Knjige </h1>
 
-      <div className="mt-10 mb-4 w-[157px]">
+      <div className="mt-11 mb-4 w-[157px]">
         <Link href="/books/new-book">
-          <Button className="uppercase text-white bg-blue flex items-center text-sm font-medium mt-10 mb-4">
+          <Button className="uppercase text-white bg-blue flex items-center text-sm font-medium mt-10 mb-7">
             <AddIcon className="mr-2" /> nova knjiga
           </Button>
         </Link>

@@ -42,7 +42,7 @@ export default function SideMenu() {
             borderRadius: '0',
             overflow: 'hidden',
             width: drawerOpen ? 273 : 56,
-            height: '921px',
+            minHeight: 'screen',
             justifyContent: 'space-between',
             boxSizing: 'border-box',
             transition: 'width 0.3s',
@@ -69,9 +69,9 @@ export default function SideMenu() {
           </ListItem>
         </List>
         {drawerOpen ? (
-          <Divider className="-mt-5.5" />
+          <Divider className="mt-3.5" />
         ) : (
-          <Divider className="mt-0.5" />
+          <Divider className="mt-3.5" />
         )}
         <List>
           <Link href={'/'}>
@@ -116,7 +116,7 @@ export default function SideMenu() {
             )}
           </Link>
           <Link href={'/librarians'}>
-            {activeItem === '/librarians' ? (
+            {activeItem !== null && activeItem.includes('/librarians') ? (
               <ListItem
                 key={'librarians'}
                 disablePadding
@@ -124,13 +124,7 @@ export default function SideMenu() {
               >
                 <ListItemButton>
                   <ListItemIcon>
-                    <PersonIcon
-                      className={
-                        activeItem === '/librarians'
-                          ? 'text-blue'
-                          : 'text-grey-text'
-                      }
-                    />
+                    <PersonIcon className="text-blue" />
                   </ListItemIcon>
                   <ListItemText primary={'Bibliotekari'} />
                 </ListItemButton>
@@ -139,13 +133,7 @@ export default function SideMenu() {
               <ListItem key={'librarians'} disablePadding>
                 <ListItemButton>
                   <ListItemIcon>
-                    <PersonIcon
-                      className={
-                        activeItem === '/librarians'
-                          ? 'text-blue'
-                          : 'text-grey-text'
-                      }
-                    />
+                    <PersonIcon className="text-grey-text" />
                   </ListItemIcon>
                   <ListItemText primary={'Bibliotekari'} />
                 </ListItemButton>
@@ -153,7 +141,7 @@ export default function SideMenu() {
             )}
           </Link>
           <Link href={'/students'}>
-            {activeItem === '/students' ? (
+            {activeItem !== null && activeItem.includes('/students') ? (
               <ListItem
                 key={'students'}
                 disablePadding
@@ -161,13 +149,7 @@ export default function SideMenu() {
               >
                 <ListItemButton>
                   <ListItemIcon>
-                    <GroupsIcon
-                      className={
-                        activeItem === '/students'
-                          ? 'text-blue'
-                          : 'text-grey-text'
-                      }
-                    />
+                    <GroupsIcon className="text-blue" />
                   </ListItemIcon>
                   <ListItemText primary={'Ucenici'} />
                 </ListItemButton>
@@ -176,13 +158,7 @@ export default function SideMenu() {
               <ListItem key={'students'} disablePadding>
                 <ListItemButton>
                   <ListItemIcon>
-                    <GroupsIcon
-                      className={
-                        activeItem === '/students'
-                          ? 'text-blue'
-                          : 'text-grey-text'
-                      }
-                    />
+                    <GroupsIcon className="text-grey-text" />
                   </ListItemIcon>
                   <ListItemText primary={'Ucenici'} />
                 </ListItemButton>
@@ -190,7 +166,7 @@ export default function SideMenu() {
             )}
           </Link>
           <Link href={'/books'}>
-            {activeItem === '/books' || activeItem === '/books/new-book' ? (
+            {activeItem !== null && activeItem.includes('/books') ? (
               <ListItem
                 key={'books'}
                 disablePadding
@@ -198,14 +174,7 @@ export default function SideMenu() {
               >
                 <ListItemButton>
                   <ListItemIcon>
-                    <MenuBookIcon
-                      className={
-                        activeItem === '/books' ||
-                        activeItem === '/books/new-book'
-                          ? 'text-blue'
-                          : 'text-grey-text'
-                      }
-                    />
+                    <MenuBookIcon className="text-blue" />
                   </ListItemIcon>
                   <ListItemText primary={'Knjige'} />
                 </ListItemButton>
@@ -214,14 +183,7 @@ export default function SideMenu() {
               <ListItem key={'books'} disablePadding>
                 <ListItemButton>
                   <ListItemIcon>
-                    <MenuBookIcon
-                      className={
-                        activeItem === '/books' ||
-                        activeItem === '/books/new-book'
-                          ? 'text-blue'
-                          : 'text-grey-text'
-                      }
-                    />
+                    <MenuBookIcon className="text-grey-text" />
                   </ListItemIcon>
                   <ListItemText primary={'Knjige'} />
                 </ListItemButton>
@@ -229,8 +191,7 @@ export default function SideMenu() {
             )}
           </Link>
           <Link href={'/authors'}>
-            {activeItem === '/authors' ||
-            activeItem === '/authors/new-author' ? (
+            {activeItem !== null && activeItem.includes('/authors') ? (
               <ListItem
                 key={'authors'}
                 disablePadding
@@ -238,14 +199,7 @@ export default function SideMenu() {
               >
                 <ListItemButton>
                   <ListItemIcon>
-                    <ClassOutlinedIcon
-                      className={
-                        activeItem === '/authors' ||
-                        activeItem === '/authors/new-author'
-                          ? 'text-blue'
-                          : 'text-grey-text'
-                      }
-                    />
+                    <ClassOutlinedIcon className="text-blue" />
                   </ListItemIcon>
                   <ListItemText primary={'Autori'} />
                 </ListItemButton>
@@ -254,14 +208,7 @@ export default function SideMenu() {
               <ListItem key={'authors'} disablePadding>
                 <ListItemButton>
                   <ListItemIcon>
-                    <ClassOutlinedIcon
-                      className={
-                        activeItem === '/authors' ||
-                        activeItem === '/authors/new-author'
-                          ? 'text-blue'
-                          : 'text-grey-text'
-                      }
-                    />
+                    <ClassOutlinedIcon className="text-grey-text" />
                   </ListItemIcon>
                   <ListItemText primary={'Autori'} />
                 </ListItemButton>
@@ -270,7 +217,7 @@ export default function SideMenu() {
           </Link>
 
           <Link href={'/publication'}>
-            {activeItem === '/publication' ? (
+            {activeItem !== null && activeItem.includes('/publication') ? (
               <ListItem
                 key={'publication'}
                 disablePadding
@@ -278,13 +225,7 @@ export default function SideMenu() {
               >
                 <ListItemButton>
                   <ListItemIcon>
-                    <SwapHorizIcon
-                      className={
-                        activeItem === '/publication'
-                          ? 'text-blue'
-                          : 'text-grey-text'
-                      }
-                    />
+                    <SwapHorizIcon className="text-blue" />
                   </ListItemIcon>
                   <ListItemText primary={'Izdavanje knjiga'} />
                 </ListItemButton>
@@ -293,13 +234,7 @@ export default function SideMenu() {
               <ListItem key={'publication'} disablePadding className="mb-115">
                 <ListItemButton>
                   <ListItemIcon>
-                    <SwapHorizIcon
-                      className={
-                        activeItem === '/publication'
-                          ? 'text-blue'
-                          : 'text-grey-text'
-                      }
-                    />
+                    <SwapHorizIcon className="text-grey-text" />
                   </ListItemIcon>
                   <ListItemText primary={'Izdavanje knjiga'} />
                 </ListItemButton>
@@ -308,7 +243,7 @@ export default function SideMenu() {
           </Link>
           <Divider />
           <Link href={'/settings'}>
-            {activeItem === '/settings' ? (
+            {activeItem !== null && activeItem.includes('/settings') ? (
               <ListItem
                 key={'settings'}
                 disablePadding
@@ -316,13 +251,7 @@ export default function SideMenu() {
               >
                 <ListItemButton>
                   <ListItemIcon>
-                    <SettingsIcon
-                      className={
-                        activeItem === '/settings'
-                          ? 'text-blue'
-                          : 'text-grey-text'
-                      }
-                    />
+                    <SettingsIcon className="text-blue" />
                   </ListItemIcon>
                   <ListItemText primary={'Settings'} />
                 </ListItemButton>
@@ -331,13 +260,7 @@ export default function SideMenu() {
               <ListItem key={'settings'} disablePadding>
                 <ListItemButton>
                   <ListItemIcon>
-                    <SettingsIcon
-                      className={
-                        activeItem === '/settings'
-                          ? 'text-blue'
-                          : 'text-grey-text'
-                      }
-                    />
+                    <SettingsIcon className="text-grey-text" />
                   </ListItemIcon>
                   <ListItemText primary={'Settings'} />
                 </ListItemButton>

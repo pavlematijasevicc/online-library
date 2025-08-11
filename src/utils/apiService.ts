@@ -1,4 +1,4 @@
-import { ApiResponse, BookData, FetchAuthorResponse, FetchBookResponse, logInData, NewAuthorData, Student } from "../../types";
+import { ApiResponse, BookData, Category, FetchAuthorResponse, FetchBookResponse, Genre, logInData, NewAuthorData, Period, Publisher, PublisherCreate, Student } from "../../types";
 import api from "./axios";
 
 export const get = async(
@@ -269,8 +269,204 @@ export const createLibrarian = async (data: Student) => {
   return response.data;
 };
 
+export const editPeriod=async(id: number, data:Period)=>{
+  try{
+    const response = await api.patch(`policies/${id}`, data, {
+  headers: { "Content-Type": "application/json" }
+});
+    console.log("Response data:",response.data)
+    return response.data;
+    }
+    catch(error:any){
+        console.error(`Greska pri editovanju perioda ${id===2 ? 'rezervacije' : 'vracanja'}:`, error);
+        throw error;
+      } 
+}
+
+ export const fetchAllPolicies = async () => {
+      try {
+            const response = await api.get('/policies')
+            return response.data;
+          } catch (error: any) {
+            console.error('Error fetching policies:', error);
+            throw error;
+          }
+        };
+
+export const createCategory=async(data:Category)=>{
+ console.log('data to send:',data)
+
+  const response = await api.post('/categories/create', data, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data; 
+}
+
+export const deleteCategory = async (id: number): Promise<any> => {
+  try {
+    const response = await api.delete(`/categories/${id}/destroy`);
+
+    console.log(`Kategorija sa ID-em: ${id} je obrisan.`);
+    return response.data;
+  } catch (error: any) {
+    console.error(`Greška pri brisanju kategorije sa ID-em ${id}:`, error);
+    throw error;
+  }
+};
 
 
-export {
+ export const editCategory = async (
+      categoryId: number,
+      data: Category
+    ): Promise<Category> => {
+      try {
+        const response = await api.patch(`/categories/${categoryId}/update`, data);
+        console.log("Response data:",response.data)
+        return response.data;
+      } catch (error: any) {
+        console.error(`Greska pri editovanju kategorije sa ID-em ${categoryId}:`, error);
+        throw error;
+      }
+    };
+
+      export const fetchCategoryById = async (categoryId: number):  Promise<Category> => {
+          try {
+            const response = await api.get(`/categories/${categoryId}`);
+            return response.data.category;
+          } catch (error: any) {
+            console.error(`Error fetching category with ID ${categoryId}:`, error);
+            throw error;
+          }
+    };
+
+
+    export const createGenre=async(data:Genre)=>{
+ console.log('data to send:',data)
+
+  const response = await api.post('/genres/create', data, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data; 
+}
+
+export const deleteGenre = async (id: number): Promise<any> => {
+  try {
+    const response = await api.delete(`/genres/${id}/destroy`);
+
+    console.log(`Zanr sa ID-em: ${id} je obrisan.`);
+    return response.data;
+  } catch (error: any) {
+    console.error(`Greška pri brisanju zanra sa ID-em ${id}:`, error);
+    throw error;
+  }
+};
+
+export const fetchGenreById = async (genreId: number):  Promise<Genre> => {
+          try {
+            const response = await api.get(`/genres/${genreId}`);
+            return response.data.genre;
+          } catch (error: any) {
+            console.error(`Error fetching genre with ID ${genreId}:`, error);
+            throw error;
+          }
+    };
+
+
+    export const editGenre = async (
+      genreId: number,
+      data: Genre
+    ): Promise<Genre> => {
+      try {
+        const response = await api.patch(`/genres/${genreId}/update`, data);
+        console.log("Response data:",response.data)
+        return response.data;
+      } catch (error: any) {
+        console.error(`Greska pri editovanju zanra sa ID-em ${genreId}:`, error);
+        throw error;
+      }
+    };
+
+
+     export const fetchAllBookOptions = async () => {
+      try {
+            const response = await api.get('/book-options')
+            return response.data;
+          } catch (error: any) {
+            console.error('Error fetching book options:', error);
+            throw error;
+          }
+        };
+
+
+
+export const createPublisher=async(data:PublisherCreate)=>{
+ console.log('data to send:',data)
+
+  const response = await api.post('/publishers/create', data, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+}
+
+export const fetchAllPublishers = async (perPage: number = 20) => {
+  try {
+    const response = await api.get('/publishers', {
+      params: {
+        per_page: perPage
+      }
+    });
+    return response.data.publishers;
+  } catch (error: any) {
+    console.error('Error fetching publishers:', error);
+    throw error;
+  }
+};
+
+export const deletePublisher = async (id: number): Promise<any> => {
+  try {
+    const response = await api.delete(`/publishers/${id}`);
+
+    console.log(`Izdavac sa ID-em: ${id} je obrisan.`);
+    return response.data;
+  } catch (error: any) {
+    console.error(`Greška pri brisanju izdavaca sa ID-em ${id}:`, error);
+    throw error;
+  }
+};
+
+export const fetchPublisherById = async (publisherId: number):  Promise<Publisher> => {
+          try {
+            const response = await api.get(`/publishers/${publisherId}`);
+            return response.data;
+          } catch (error: any) {
+            console.error(`Error fetching publisher with ID ${publisherId}:`, error);
+            throw error;
+          }
+    };
+
+    export const editPublisher = async (
+      publisherId: number | null,
+      data: PublisherCreate
+    ): Promise<Genre> => {
+      try {
+        const response = await api.patch(`/publishers/${publisherId}/update`, data);
+        console.log("Response data:",response.data)
+        return response.data;
+      } catch (error: any) {
+        console.error(`Greska pri editovanju izdavaca sa ID-em ${publisherId}:`, error);
+        throw error;
+      }
+    };
+
+
+
+  export {
     login,
 }

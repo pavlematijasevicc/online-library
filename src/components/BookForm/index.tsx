@@ -14,7 +14,15 @@ import InputLabel from '@mui/material/InputLabel'
 import MenuItem from '@mui/material/MenuItem'
 import FormControl from '@mui/material/FormControl'
 import Select from '@mui/material/Select'
-import { Author, BookData, Category, Props, Genre } from '../../../types'
+import {
+  Author,
+  BookData,
+  Category,
+  Props,
+  Genre,
+  Publisher,
+} from '../../../types'
+import { SelectChangeEvent } from '@mui/material/Select'
 import {
   checkAuthors,
   checkBookName,
@@ -25,6 +33,7 @@ import {
   fetchAllAuthors,
   fetchAllCategories,
   fetchAllGenres,
+  fetchAllPublishers,
 } from '@/utils/apiService'
 import { usePathname } from 'next/navigation'
 
@@ -42,6 +51,8 @@ export default function BookForm({
   const [quantityError, setQuantityError] = useState<string | null>(null)
   const [dataCategories, setDataCategories] = useState<Category[]>([])
   const [dataGenres, setDataGenres] = useState<Genre[]>([])
+  const [dataPublishers, setDataPublishers] = useState<Publisher[]>([])
+  const [publishersError, setPublishersError] = useState<string | null>(null)
   const [data, setData] = useState<Author[]>([])
 
   useEffect(() => {
@@ -72,6 +83,17 @@ export default function BookForm({
       }
     }
 
+    const loadPublishers = async () => {
+      try {
+        const publishers = await fetchAllPublishers(20)
+
+        setDataPublishers(publishers.data)
+      } catch (error) {
+        console.error('Greška prilikom učitavanja izdavaca:', error)
+      }
+    }
+
+    loadPublishers()
     loadGenres()
     loadAuthors()
     loadCategories()
@@ -79,6 +101,7 @@ export default function BookForm({
 
   console.log('Genres:', dataGenres)
   console.log('Categories: ', dataCategories)
+  console.log('Publishers:', dataPublishers)
 
   let names: string[] = []
   if (data && data.length > 0) {
@@ -92,14 +115,24 @@ export default function BookForm({
     const descriptionErr = checkDescription(bookData.description)
     const authorsErr = checkAuthors(bookData.authors)
     const quantityErr = checkQuantity(bookData.number_of_copies_available)
+    const publisherErr = !bookData.publisher_id
+      ? 'Morate izabrati izdavača!'
+      : null
 
     setBookNameError(nameError)
     setAuthorsError(authorsErr)
     setDescriptionError(descriptionErr)
     setQuantityError(quantityErr)
+    setPublishersError(publisherErr)
     setSubmitted(true)
 
-    if (nameError || authorsErr || descriptionErr || quantityErr) {
+    if (
+      nameError ||
+      authorsErr ||
+      descriptionErr ||
+      quantityErr ||
+      publisherErr
+    ) {
       return // prekid ako ima grešaka
     }
 
@@ -114,7 +147,7 @@ export default function BookForm({
       description: '',
       categories: [],
       genres: [],
-      publishers: [],
+      publisher_id: null,
       authors: [],
       year: null,
       number_of_copies_available: null,
@@ -273,38 +306,42 @@ export default function BookForm({
           <FormHelperText>{authorsError}</FormHelperText>
         )}
       </FormControl>
-
-      <FormControl sx={{ minWidth: 120 }} className="mb-3">
-        <InputLabel id="demo-simple-select-helper-label">
-          Izaberite izdavaca
-        </InputLabel>
+      <FormControl
+        sx={{ minWidth: 120 }}
+        className="mb-3"
+        error={submitted && !!publishersError}
+      >
+        <InputLabel id="publisher-select-label">Izaberite izdavača</InputLabel>
         <Select
-          labelId="demo-simple-select-helper-label"
-          id="demo-simple-select-helper"
-          value={bookData.publishers && bookData.publishers}
-          label="izdavac"
-          multiple
-          onChange={(e) => {
-            const {
-              target: { value },
-            } = e
-
-            const updatedPublishers =
-              typeof value === 'string' ? value.split(',') : value
+          labelId="publisher-select-label"
+          id="publisher-select"
+          value={
+            bookData.publisher_id !== null ? String(bookData.publisher_id) : ''
+          }
+          label="izdavač"
+          onChange={(e: SelectChangeEvent) => {
             setBookData((pre: BookData) => ({
               ...pre,
-              publishers: updatedPublishers,
+              publisher_id:
+                e.target.value === '' ? null : Number(e.target.value),
             }))
+            setPublishersError(null)
           }}
         >
-          <MenuItem value="">
-            <em>None</em>
-          </MenuItem>
-          <MenuItem value={10}>Ten</MenuItem>
-          <MenuItem value={20}>Twenty</MenuItem>
-          <MenuItem value={30}>Thirty</MenuItem>
+          {dataPublishers.map((publisher) => (
+            <MenuItem
+              key={publisher.publisher_id}
+              value={String(publisher.publisher_id)}
+            >
+              {publisher.publisher_name}
+            </MenuItem>
+          ))}
         </Select>
+        {submitted && publishersError && (
+          <FormHelperText>{publishersError}</FormHelperText>
+        )}
       </FormControl>
+
       <TextField
         label="Unesite godinu izdavanja.."
         variant="outlined"

@@ -38,7 +38,7 @@ export interface NewAuthorData {
     categories: string[]
     genres: string[]
     authors: number[]
-    publishers: string[]
+    publisher_id: number | null
     year: number | null
     number_of_copies_available: number | null
     number_of_pages: number | null
@@ -110,9 +110,17 @@ export type Dimensions={
   dimensions:string[]
 }
 
+export type BookOptions={
+  bindings:string[],
+  scripts:string[],
+  dimensions:string[]
+}
+
 export type Publisher={
+  publisher_id?:number,
   publisher_name:string
 }
+
 
 export type PublisherCreate={
   name:string

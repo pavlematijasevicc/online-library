@@ -9,6 +9,7 @@ import BookForm from '@/components/BookForm'
 import BookSpecification from '@/components/BookSpecification'
 import Multimedia from '@/components/Multimedia'
 import { BookData } from '../../../../types'
+import Link from 'next/link'
 
 export default function NewBook() {
   const [value, setValue] = React.useState('1')
@@ -20,7 +21,7 @@ export default function NewBook() {
     categories: [],
     genres: [],
     authors: [],
-    publishers: [],
+    publisher_id: null,
     year: null,
     number_of_copies_available: null,
 
@@ -46,7 +47,9 @@ export default function NewBook() {
       <div className="px-4">
         <h1 className="capitalize"> Nova knjiga </h1>
         <div className="mt-1 text-xs font-normal">
-          <span className="text-blue">Evidencija knjiga</span>
+          <Link href={'/books'}>
+            <span className="text-blue">Evidencija knjiga</span>
+          </Link>
           <span> / Nova knjiga</span>
         </div>
       </div>

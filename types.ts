@@ -52,20 +52,20 @@ export interface NewAuthorData {
   }
 
   export interface Category {
-    id: number
+    id?: number
     name: string
     description: string
-    icon: string | null
-    created_at: string
-    updated_at: string
+    icon?: File | null
+    created_at?: string
+    updated_at?: string
   }
   
   export interface Genre {
-    id: number;
+    id?: number;
     name: string;
     description: string;
-    created_at: string;  // ISO 8601 format
-    updated_at: string;  // ISO 8601 format
+    created_at?: string;  // ISO 8601 format
+    updated_at?: string;  // ISO 8601 format
   }
   
   export type Props = {
@@ -93,3 +93,28 @@ export type StudentProps={
   setData?: Dispatch<SetStateAction<Student | undefined>>,
   nameInputRef:React.RefObject<HTMLInputElement | null>
 }
+
+export type Period={
+  period:number
+}
+
+export type Binding = {
+  bindings: string[]
+}
+
+export type Script={
+  scripts: string[]
+}
+
+export type Dimensions={
+  dimensions:string[]
+}
+
+export type Publisher={
+  publisher_name:string
+}
+
+export type PublisherCreate={
+  name:string
+}
+

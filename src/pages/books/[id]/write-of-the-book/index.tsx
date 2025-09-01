@@ -1,5 +1,4 @@
 'use client'
-
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
 import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined'
@@ -10,9 +9,10 @@ import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import HistoryEduOutlinedIcon from '@mui/icons-material/HistoryEduOutlined'
 import { useEffect, useRef, useState } from 'react'
-import WriteOfTheBookTable from '@/components/WriteOfTheBookTable'
 import { BookData } from '../../../../../types'
-import { deleteBook, fetchBookById } from '@/utils/apiService'
+import { deleteBook, discardTheBook, fetchBookById } from '@/utils/apiService'
+import PublishedBooksTable from '@/components/PublishedBooksTable'
+import { Alert, Box, Button } from '@mui/material'
 
 export default function WriteOfTheBook() {
   const [openMenu, setOpenMenu] = useState(false)
@@ -20,6 +20,7 @@ export default function WriteOfTheBook() {
   const [id, setId] = useState<number>()
   const [data, setData] = useState<BookData>()
   const nameInputRef = useRef<HTMLInputElement>(null)
+  const [showAlert, setShowAlert] = useState(false)
   const path = usePathname()
   const router = useRouter()
 
@@ -48,6 +49,10 @@ export default function WriteOfTheBook() {
       loadBook()
     }
   }, [id])
+
+  function handleAlert() {
+    setShowAlert(true)
+  }
 
   const handleDeleteBook = async (id: number) => {
     try {
@@ -78,10 +83,19 @@ export default function WriteOfTheBook() {
     }, 0)
   }
 
-  if (path)
+  const handleWriteOfTheBook = async (id: number) => {
+    try {
+      await discardTheBook(id)
+      handleAlert()
+    } catch (err) {
+      console.error('Greška prilikom otpisivanja knjige:', err)
+    }
+  }
+
+  if (path && id)
     return (
       <div className="py-3 text-xl font-medium overflow-y-hidden">
-        <div className="px-4 flex justify-between">
+        <div className="px-4 flex justify-between mb-10">
           <div className="flex flex-col">
             <h1 className="capitalize"> {data?.name} </h1>
             <div className="mt-1 text-xs font-normal">
@@ -178,7 +192,20 @@ export default function WriteOfTheBook() {
           </div>
         </div>
 
-        <WriteOfTheBookTable />
+        <PublishedBooksTable width={1750} />
+        <Box className="flex justify-end mr-4 mt-2">
+          <Button
+            variant="contained"
+            sx={{
+              backgroundColor: '#007bff',
+              color: 'white',
+            }}
+            onClick={() => handleWriteOfTheBook(id)}
+          >
+            <HistoryEduOutlinedIcon className="mr-1" />
+            Otpisi knjigu
+          </Button>
+        </Box>
 
         {showDeleteModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -206,6 +233,16 @@ export default function WriteOfTheBook() {
               </div>
             </div>
           </div>
+        )}
+        {showAlert && (
+          <Alert
+            className="mt-6 w-[600px] mx-4 justify-self-end"
+            severity="success"
+            onClose={() => setShowAlert(false)}
+            variant="filled"
+          >
+            Knjiga uspjesno otpisana!
+          </Alert>
         )}
       </div>
     )

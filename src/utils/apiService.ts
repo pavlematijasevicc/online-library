@@ -1,4 +1,4 @@
-import { ApiResponse, BookData, Category, FetchAuthorResponse, FetchBookResponse, Genre, logInData, NewAuthorData, Period, Publisher, PublisherCreate, Student } from "../../types";
+import { ApiResponse, BookData, Category, FetchAuthorResponse, FetchBookResponse, Genre, logInData, NewAuthorData, Period, Publisher, PublisherCreate, Rental, Student } from "../../types";
 import api from "./axios";
 
 export const get = async(
@@ -464,6 +464,171 @@ export const fetchPublisherById = async (publisherId: number):  Promise<Publishe
         throw error;
       }
     };
+
+
+export const createRental = async (data: Rental) => {
+  const response = await api.post('/rentals', data, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+  return response.data
+}
+
+interface ActiveRentalsParams {
+  search_value?: string;
+  per_page?: number;
+  student_id?: number;
+  book_id?: number;
+}
+
+export async function getActiveRentals(params:ActiveRentalsParams) {
+  try {
+    const response = await api.get('/rentals/active', {
+      params: params
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Greška prilikom preuzimanja aktivnih iznajmljivanja:', error);
+    throw error;
+  }
+}
+
+export async function getReturnedBooks(params:ActiveRentalsParams) {
+  try {
+    const response = await api.get('rentals/returned', {
+      params: params
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Greška prilikom preuzimanja vracenih knjiga :', error);
+    throw error;
+  }
+}
+
+export const returnBook = async (id: number) => {
+  const response = await api.post(
+    `/rentals/${id}/return`,
+    {}, // prazno tijelo jer ga nema u Postmanu
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+  return response.data
+}
+
+export const discardTheBook = async (id: number) => {
+  const response = await api.post(
+    `/books/${id}/discard`,
+    {}, // prazno tijelo jer ga nema u Postmanu
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+  return response.data
+}
+
+
+export const createReservation = async (book_id: number, student_id:number) => {
+  const response = await api.post('reservations',
+    {book_id,student_id}, 
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+  return response.data
+}
+
+export const createReservationByStudent = async (book_id: number) => {
+  const response = await api.post('reservations',
+    {book_id}, 
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+  return response.data
+}
+
+
+export async function getOverdueBooks(params:ActiveRentalsParams) {
+  try {
+    const response = await api.get('rentals/overdue', {
+      params: params
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Greška prilikom preuzimanja knjiga u prekoracenju:', error);
+    throw error;
+  }
+}
+
+export async function getActiveReservations() {
+  try {
+    const response = await api.get('reservations/active');
+    return response.data;
+  } catch (error) {
+    console.error('Greška prilikom preuzimanja aktivnih rezervacija:', error);
+    throw error;
+  }
+}
+
+export async function getArchivedReservations() {
+  try {
+    const response = await api.get('reservations/archived');
+    return response.data;
+  } catch (error) {
+    console.error('Greška prilikom preuzimanja arhiviranih rezervacija:', error);
+    throw error;
+  }
+}
+
+
+export async function confirmReservation(reservation_id:number){
+  try{
+    const response=await api.post(`/reservations/${reservation_id}/confirm`);
+    console.log(response)
+
+  }catch(error){
+    console.log('Greska prilikom potvrde rezervacije',error)
+    throw error;
+  }
+}
+
+export async function rejectReservation(reservation_id:number){
+  try{
+    const response=await api.post(`/reservations/${reservation_id}/reject`);
+    console.log(response)
+
+  }catch(error){
+    console.log('Greska prilikom odbijanja rezervacije',error)
+    throw error;
+  }
+}
+
+type RentFromReservation={
+  reservation_id:number,
+  book_id:number
+  student_id:number
+}
+
+
+export const createRentalFromReservation = async (data: RentFromReservation) => {
+  const response = await api.post('/rentals', data, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+  return response.data
+}
+
 
 
 

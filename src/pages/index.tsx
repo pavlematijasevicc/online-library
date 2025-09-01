@@ -1,23 +1,19 @@
-'use client'
-import { useState, useEffect } from 'react'
-import withAuth from '../components/withAuth'
-import Navbar from '@/components/Navbar'
-import SideMenu from '@/components/SideMenu'
-import Link from 'next/link'
-import { Button } from '@mui/material'
+import ActivityMain from '@/components/ActivityMain'
+import ReservationsTable from '@/components/ReservationsTable'
+import Statistics from '@/components/Statistics'
+import { Box } from '@mui/material'
 
-function Home() {
-  function handleLogin() {
-    localStorage.removeItem('access_token')
-  }
-
+export default function Dashboard() {
   return (
-    <Link href={'/login'}>
-      <Button className="hover:cursor-pointer" onClick={() => handleLogin()}>
-        Log out
-      </Button>
-    </Link>
+    <Box className="px-4 py-6 text-xl font-medium capitalize">
+      <h1>Dashboard</h1>
+      <Box className="flex">
+        <ActivityMain />
+        <Box>
+          <ReservationsTable />
+          <Statistics />
+        </Box>
+      </Box>
+    </Box>
   )
 }
-
-export default withAuth(Home)

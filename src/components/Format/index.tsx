@@ -49,9 +49,9 @@ export default function Format() {
         const options = await fetchAllBookOptions()
         console.log('Fetched formats:', options.dimensions)
         const cleanedOptions = options.dimensions.map(
-          (b: string, index: number) => ({
+          (b: { value: string; label: string }, index: number) => ({
             id: index,
-            name: b,
+            name: b.label, // ili b.value, zavisi šta hoćeš da prikažeš
           })
         )
         setFormats(cleanedOptions)

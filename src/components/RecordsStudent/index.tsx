@@ -11,8 +11,15 @@ import OverdueBooks from '../OverdueBooks'
 import PublishedBooksTableStudents from '../PublishedBooksTableStudents'
 import ReturnedBooksStudent from '../ReturnedBooksStudent'
 import OverdueBooksStudent from '../OverdueBooksStudent'
+import { Student } from '../../../types'
+import ActiveReservationsStudent from '../ActiveReservationsStudent'
+import ArchivedReservationsStudent from '../ArchivedReservationsStudent'
 
-export default function RecordsStudent() {
+type RecordsStudentsProps = {
+  data: Student
+}
+
+export default function RecordsStudent({ data }: RecordsStudentsProps) {
   const [activeItem, setActiveItem] = useState<number>(1)
   return (
     <Box className="flex">
@@ -68,9 +75,13 @@ export default function RecordsStudent() {
           <EventNoteIcon className="mr-4" /> Arhivirane rezervacije
         </Box>
       </Box>
-      {activeItem === 1 && <PublishedBooksTableStudents />}
-      {activeItem === 2 && <ReturnedBooksStudent />}
-      {activeItem === 3 && <OverdueBooksStudent />}
+      {activeItem === 1 && (
+        <PublishedBooksTableStudents data={data} width={1465} />
+      )}
+      {activeItem === 2 && <ReturnedBooksStudent data={data} width={1465} />}
+      {activeItem === 3 && <OverdueBooksStudent data={data} width={1465} />}
+      {activeItem === 4 && <ActiveReservationsStudent data={data} />}
+      {activeItem === 5 && <ArchivedReservationsStudent data={data} />}
     </Box>
   )
 }

@@ -75,7 +75,7 @@ export default function SideMenu() {
         )}
         <List>
           <Link href={'/'}>
-            {activeItem === '/' ? (
+            {activeItem === '/' || activeItem === '/activity' ? (
               <ListItem
                 key={'dashboard'}
                 disablePadding
@@ -83,15 +83,7 @@ export default function SideMenu() {
               >
                 <ListItemButton>
                   <ListItemIcon>
-                    {activeItem === '/' ? (
-                      <DashboardIcon
-                        className={
-                          activeItem === '/' ? 'text-blue' : 'text-grey-text'
-                        }
-                      />
-                    ) : (
-                      <DashboardIcon />
-                    )}
+                    <DashboardIcon className="text-blue" />
                   </ListItemIcon>
                   <ListItemText primary={'Dashboard'} />
                 </ListItemButton>
@@ -100,15 +92,7 @@ export default function SideMenu() {
               <ListItem key={'dashboard'} disablePadding>
                 <ListItemButton>
                   <ListItemIcon>
-                    {activeItem === '/' ? (
-                      <DashboardIcon
-                        className={
-                          activeItem === '/' ? 'text-blue' : 'text-grey-text'
-                        }
-                      />
-                    ) : (
-                      <DashboardIcon />
-                    )}
+                    <DashboardIcon className="text-grey-text" />
                   </ListItemIcon>
                   <ListItemText primary={'Dashboard'} />
                 </ListItemButton>

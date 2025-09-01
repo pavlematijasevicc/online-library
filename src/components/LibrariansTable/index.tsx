@@ -193,7 +193,7 @@ export default function LibrariansTable() {
   const [data, setData] = useState<Data[]>([])
 
   useEffect(() => {
-    const fetchStudents = async () => {
+    const fetchLibrarians = async () => {
       setLoading(true)
       try {
         const response = await getAllStudents(50, '', 2)
@@ -213,13 +213,13 @@ export default function LibrariansTable() {
 
         setData(mapped)
       } catch (error) {
-        setError('Greška pri učitavanju učenika.')
+        setError('Greška pri učitavanju bibliotekara.')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchStudents()
+    fetchLibrarians()
   }, [])
 
   const [error, setError] = useState<string | null>(null)

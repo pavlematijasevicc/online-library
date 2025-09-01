@@ -6,7 +6,7 @@ import TabList from '@mui/lab/TabList'
 import TabPanel from '@mui/lab/TabPanel'
 import { Box, Button, Link, Tab } from '@mui/material'
 import React, { useEffect, useRef, useState } from 'react'
-import { BookData } from '../../../../types'
+import { BookData, OverdueRecord, RentalRecord } from '../../../../types'
 import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined'
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 import AssignmentReturnOutlinedIcon from '@mui/icons-material/AssignmentReturnOutlined'
@@ -16,7 +16,14 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import HistoryEduOutlinedIcon from '@mui/icons-material/HistoryEduOutlined'
 import Records from '@/components/Records'
 import { usePathname, useRouter } from 'next/navigation'
-import { deleteBook, fetchBookById } from '@/utils/apiService'
+import {
+  deleteBook,
+  fetchBookById,
+  getActiveRentals,
+  getActiveReservations,
+  getOverdueBooks,
+} from '@/utils/apiService'
+import { Reservation } from '@/components/ActiveReservationsTable'
 
 export default function Book() {
   const [data, setData] = useState<BookData>()
@@ -28,6 +35,9 @@ export default function Book() {
   const [error, setError] = useState<string | null>(null)
   const path = usePathname()
   const router = useRouter()
+  const [rentalData, setRentalData] = useState<RentalRecord[]>()
+  const [overdueBooks, setOverdueBooks] = useState<OverdueRecord[]>([])
+  const [overdueLength, setOverdueLength] = useState<number>()
   const [bookData, setBookData] = React.useState<BookData>({
     // BookForm
     name: '',
@@ -35,7 +45,7 @@ export default function Book() {
     categories: [],
     genres: [],
     authors: [],
-    publishers: [],
+    publisher_id: null,
     year: null,
     number_of_copies_available: null,
 
@@ -51,6 +61,7 @@ export default function Book() {
     // Multimedia
     images: null as File[] | null,
   })
+  const [reservationsData, setReservationsData] = useState<Reservation[]>([])
 
   useEffect(() => {
     if (path) {
@@ -75,7 +86,47 @@ export default function Book() {
     }
   }, [id])
 
-  console.log('Data', data)
+  useEffect(() => {
+    if (id) {
+      console.log(id)
+      const loadRentals = async () => {
+        const rentals = await getActiveRentals({
+          book_id: id,
+          per_page: 20,
+        })
+        setRentalData(rentals.data.data)
+      }
+
+      const loadOverdue = async () => {
+        const overdue = await getOverdueBooks({ book_id: id, per_page: 20 })
+        setOverdueBooks(overdue.data.data)
+      }
+
+      const loadReservations = async () => {
+        const rentals = await getActiveReservations()
+        const reservations = rentals.reservations.data
+        console.log('reservations:', reservations)
+        const reservation = reservations.filter((res: Reservation) => {
+          return res.book_id === id
+        })
+
+        setReservationsData(reservation)
+      }
+
+      loadReservations()
+
+      loadOverdue()
+      loadRentals()
+    }
+  }, [id])
+
+  useEffect(() => {
+    setOverdueLength(
+      overdueBooks.filter((book) => {
+        return book.days_overdue > 0
+      }).length
+    )
+  }, [overdueBooks])
 
   useEffect(() => {
     if (data) {
@@ -84,7 +135,7 @@ export default function Book() {
         categories: data.categories ?? [],
         genres: data.genres ?? [],
         authors: data.authors ?? [],
-        publishers: data.publishers ?? [],
+        publisher_id: data.publisher_id ?? null,
         images: null, // ako trebaš da resetuješ slike
       })
     }
@@ -122,7 +173,8 @@ export default function Book() {
   const handleChange = (event: React.SyntheticEvent, newValue: string) => {
     setValue(newValue)
   }
-  if (data)
+
+  if (data && rentalData && overdueBooks && reservationsData)
     return (
       <div className="py-3 text-xl font-medium overflow-y-hidden">
         <div className="px-4 flex justify-between">
@@ -280,7 +332,7 @@ export default function Book() {
                     variant="outlined"
                     className="text-sm font-normal px-3 py-2 border-green-500 text-green-500"
                   >
-                    {data.number_of_copies_available} primjeraka
+                    {data.number_of_copies_available} primjerak(a)
                   </Button>
                 </Box>
                 <Box className="flex items-center justify-between text-grey-text mb-4">
@@ -289,7 +341,7 @@ export default function Book() {
                     variant="outlined"
                     className="text-sm font-normal px-3 py-2 text-orange-400 border-orange-400"
                   >
-                    0 primjerka
+                    {reservationsData.length} primjerak(a)
                   </Button>
                 </Box>
                 <Box className="flex items-center justify-between text-grey-text mb-4">
@@ -298,7 +350,7 @@ export default function Book() {
                     variant="outlined"
                     className="text-sm font-normal px-3 py-2 border-blue text-blue"
                   >
-                    0 primjerka
+                    {rentalData.length} primjerak(a)
                   </Button>
                 </Box>
                 <Box className="flex items-center justify-between text-grey-text mb-4">
@@ -307,7 +359,7 @@ export default function Book() {
                     variant="outlined"
                     className="text-sm font-normal px-3 py-2 border-red-500 text-red-500"
                   >
-                    0 primjerka
+                    {overdueLength} primjerak(a)
                   </Button>
                 </Box>
                 <Box className="flex items-center justify-between text-grey-text mb-4">
@@ -316,7 +368,10 @@ export default function Book() {
                     variant="outlined"
                     className="text-sm font-normal px-3 py-2 border-gray-500 text-gray-500"
                   >
-                    {data.number_of_copies_available} primjeraka
+                    {Number(data.number_of_copies_available) +
+                      Number(rentalData.length) +
+                      Number(reservationsData.length)}
+                    primjerak(a)
                   </Button>
                 </Box>
               </Box>
@@ -350,7 +405,7 @@ export default function Book() {
               />
             </TabPanel>
             <TabPanel value="4">
-              <Records />
+              <Records id={id!} />
             </TabPanel>
           </TabContext>
           {showDeleteModal && (

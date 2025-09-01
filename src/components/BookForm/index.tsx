@@ -99,10 +99,6 @@ export default function BookForm({
     loadCategories()
   }, [])
 
-  console.log('Genres:', dataGenres)
-  console.log('Categories: ', dataCategories)
-  console.log('Publishers:', dataPublishers)
-
   let names: string[] = []
   if (data && data.length > 0) {
     names = data.map((author) => `${author.first_name} ${author.last_name}`)

@@ -126,3 +126,71 @@ export type PublisherCreate={
   name:string
 }
 
+export type Rental={
+  book_id: number,
+  student_id: number
+}
+
+export type Person = {
+  id: number;
+  last_name: string;
+  first_name?: string;
+  name?:string
+  username?:string
+};
+export interface OverdueRecord {
+  rental_id: number
+  book_title: string
+  rental_date: string            
+  rented_out_by: Person
+  total_rental_days: number
+  days_overdue: number
+}
+
+export type RentalRecord = {
+  rental_id:number,
+  active_days?: number;
+  book_title: string;
+  rental_date: string; // ISO string datuma
+  rented_by: Person;
+  rented_out_by: Person;
+};
+
+export type ReturnedRecord={
+  rental_id:number,
+  active_days: number;
+  book_title: string;
+  rental_date: string; 
+  returned_by: Person;
+  rented_out_by: Person;
+  returned_at?:string
+}
+
+export type Reservation={
+  book_id:number,
+  student_id:number
+}
+
+export type Activity={
+  rental_id:number,
+  book_title:string,
+  rental_date: string,
+  librarian: string,
+  student: string,
+  student_username:string,
+  role:number
+  librarian_username:string
+}
+
+export type ActiveUser = {
+  email: string;
+  first_name: string;
+  id: number;
+  jmbg: string;
+  last_login_at: string;
+  last_name: string;
+  login_count: number;
+  profile_picture: string | null;
+  role: string;
+  username: string;
+};

@@ -9,31 +9,56 @@ import HistoryEduOutlinedIcon from '@mui/icons-material/HistoryEduOutlined'
 import { useEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import CloseIcon from '@mui/icons-material/Close'
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
-import { DatePicker } from '@mui/x-date-pickers/DatePicker'
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import {
+  createRental,
+  getActiveRentals,
+  getActiveReservations,
+  getOverdueBooks,
+} from '@/utils/apiService'
+import {
+  Alert,
   Box,
   Button,
   FormControl,
+  FormHelperText,
   InputLabel,
   MenuItem,
   Select,
   TextField,
 } from '@mui/material'
-import { BookData } from '../../../../../types'
-import { deleteBook, fetchBookById } from '@/utils/apiService'
+import {
+  BookData,
+  OverdueRecord,
+  Rental,
+  RentalRecord,
+} from '../../../../../types'
+import { deleteBook, fetchBookById, getAllStudents } from '@/utils/apiService'
 import { useRouter } from 'next/router'
+import { Reservation } from '@/components/ActiveReservationsTable'
+
+interface StudentData {
+  id: number
+  fullName: string
+}
 
 export default function IssuedBook() {
   const [openMenu, setOpenMenu] = useState<boolean>(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [pupil, setPupil] = useState<string>('')
   const [id, setId] = useState<number>()
   const nameInputRef = useRef<HTMLInputElement>(null)
-  const [issueDate, setIssueDate] = useState<Date | null>(null)
-  const [returnDate, setReturnDate] = useState<Date | null>(null)
   const [data, setData] = useState<BookData>()
+  const [rentalData, setRentalData] = useState<Rental>({
+    book_id: 0,
+    student_id: 0,
+  })
+  const [studentsData, setStudentsData] = useState<StudentData[]>([])
+  const [studentError, setStudentError] = useState(false)
+  const [showAlert, setShowAlert] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [rentalBooks, setRentalBooks] = useState<RentalRecord[]>()
+  const [overdueBooks, setOverdueBooks] = useState<OverdueRecord[]>([])
+  const [overdueLength, setOverdueLength] = useState<number>()
+  const [reservationsData, setReservationsData] = useState<Reservation[]>([])
   const router = useRouter()
   const path = usePathname()
 
@@ -53,13 +78,77 @@ export default function IssuedBook() {
       const loadBook = async () => {
         const book = await fetchBookById(id)
         setData(book.book)
+        setRentalData((prev) => ({ ...prev, book_id: id }))
       }
 
+      const loadRentals = async () => {
+        const rentals = await getActiveRentals({
+          book_id: id,
+          per_page: 20,
+        })
+        setRentalBooks(rentals.data.data)
+      }
+      const loadOverdue = async () => {
+        const overdue = await getOverdueBooks({ book_id: id, per_page: 20 })
+        setOverdueBooks(overdue.data.data)
+      }
+
+      const loadReservations = async () => {
+        const rentals = await getActiveReservations()
+        const reservations = rentals.reservations.data
+        const reservation = reservations.filter((res: Reservation) => {
+          return res.book_id === id
+        })
+
+        setReservationsData(reservation)
+      }
+
+      loadReservations()
+      loadRentals()
+      loadOverdue()
       loadBook()
     }
   }, [id])
 
   console.log('Data:', data)
+
+  console.log('overdue data:', overdueBooks)
+
+  useEffect(() => {
+    setOverdueLength(
+      overdueBooks.filter((book) => {
+        return book.days_overdue > 0
+      }).length
+    )
+  }, [overdueBooks])
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await getAllStudents(50, '', 1)
+
+        const fetchedStudents = response.data.data || []
+
+        const mapped: StudentData[] = fetchedStudents.map((student: any) => ({
+          id: student.id,
+          fullName: `${student.first_name || ''} ${
+            student.last_name || ''
+          }`.trim(),
+        }))
+
+        setStudentsData(mapped)
+      } catch (error) {
+        console.log('greska prilikom ucitavanja ucenika!')
+      }
+    }
+
+    fetchStudents()
+  }, [])
+
+  function handleAlert() {
+    console.log('usao u alert')
+    setShowAlert(true)
+  }
 
   const handleDeleteBook = async (id: number) => {
     try {
@@ -84,34 +173,37 @@ export default function IssuedBook() {
     setOpenMenu((prev) => !prev)
   }
 
-  const handleEditClick = () => {
-    setTimeout(() => {
-      nameInputRef.current?.focus()
-    }, 0)
-  }
-
-  const handleIssueBook = () => {
-    console.log('issued')
-  }
-
   function deleteFields(e: React.FormEvent) {
-    /* e.preventDefault()
-      setBookData((pre: BookData) => ({
-        ...pre,
-        name: '',
-        description: '',
-        categories: [],
-        genres: [],
-        publishers: [],
-        authors: [],
-        year: null,
-        number_of_copies_available: null,
-      }))
-      setBookNameError(null)
-      setSubmitted(false)*/
+    e.preventDefault()
+    setRentalData((prev) => ({
+      ...prev!,
+      student_id: 0,
+    }))
+    setStudentError(false)
   }
 
-  if (path)
+  function openIssueConfirm() {
+    if (!rentalData.student_id) {
+      setStudentError(true)
+      return
+    }
+    setStudentError(false)
+    handleIssueBook() // <-- odmah šaljemo podatke
+  }
+
+  async function handleIssueBook() {
+    try {
+      setIsSubmitting(true)
+      await createRental(rentalData) // API poziv
+      setShowAlert(true) // pokaži alert
+    } catch (err) {
+      console.error('Greška pri izdavanju knjige:', err)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (path && studentsData && overdueBooks && rentalBooks && reservationsData)
     return (
       <div className="py-3 text-xl font-medium overflow-y-hidden">
         <div className="px-4 flex justify-between">
@@ -188,12 +280,7 @@ export default function IssuedBook() {
                 ></div>
                 <div className="absolute w-[320px] -mr-40 mt-40 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-90 text-left">
                   <Link href={`${path.split('/').slice(0, -1).join('/')}`}>
-                    <div
-                      className="capitalize px-4 py-3 hover:cursor-pointer"
-                      onClick={() => {
-                        handleEditClick()
-                      }}
-                    >
+                    <div className="capitalize px-4 py-3 hover:cursor-pointer">
                       <CreateOutlinedIcon
                         sx={{
                           width: '20px',
@@ -230,7 +317,6 @@ export default function IssuedBook() {
         >
           <Box
             component="form"
-            onSubmit={handleIssueBook}
             sx={{
               width: 720,
               display: 'flex',
@@ -238,57 +324,44 @@ export default function IssuedBook() {
             }}
           >
             <h2 className="pb-4 font-medium text-xl">Izdaj knjigu</h2>
-            <FormControl sx={{ minWidth: 120 }} className="mb-3">
+            <FormControl
+              sx={{ minWidth: 120 }}
+              className="mb-3"
+              error={studentError}
+            >
               <InputLabel id="demo-simple-select-helper-label">
                 Izaberite ucenika..
               </InputLabel>
               <Select
                 labelId="demo-simple-select-helper-label"
                 id="demo-simple-select-helper"
-                label="ucenik"
+                value={rentalData?.student_id || ''}
+                onChange={(e) => {
+                  setRentalData((prev) => ({
+                    ...prev!,
+                    student_id: Number(e.target.value),
+                  }))
+                  setStudentError(false)
+                }}
               >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                <MenuItem value={10}>Ten</MenuItem>
-                <MenuItem value={20}>Twenty</MenuItem>
-                <MenuItem value={30}>Thirty</MenuItem>
+                {studentsData.map((student) => (
+                  <MenuItem value={student.id} key={student.id}>
+                    {student.fullName}
+                  </MenuItem>
+                ))}
               </Select>
+              {studentError && (
+                <FormHelperText>Morate izabrati učenika</FormHelperText>
+              )}
             </FormControl>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <Box display="flex" gap="16px" className="mb-6">
-                <DatePicker
-                  label="Datum izdavanja"
-                  value={issueDate}
-                  onChange={(newValue) => setIssueDate(newValue)}
-                  slotProps={{
-                    textField: {
-                      placeholder: 'Unesite datum',
-                      helperText: 'Format dd/mm/yyyy',
-                      fullWidth: true,
-                    },
-                  }}
-                />
 
-                <DatePicker
-                  label="Datum vraćanja"
-                  value={returnDate}
-                  onChange={(newValue) => setReturnDate(newValue)}
-                  slotProps={{
-                    textField: {
-                      placeholder: 'Datum vraćanja',
-                      helperText: 'Rok vraćanja: 30 dana',
-                      fullWidth: true,
-                    },
-                  }}
-                />
-              </Box>
-            </LocalizationProvider>
             <Box className="flex ml-auto">
               <Button
                 variant="contained"
-                type="submit"
+                type="button"
+                onClick={openIssueConfirm}
                 className="uppercase text-sm font-medium pt-[10px] px-4 bg-blue mr-2 self-end"
+                disabled={isSubmitting}
               >
                 <WavingHandOutlinedIcon className="mr-2" />
                 Izdaj knjigu
@@ -321,7 +394,7 @@ export default function IssuedBook() {
                 variant="outlined"
                 className="text-sm font-normal px-3 py-2 text-orange-400 border-orange-400"
               >
-                0 primjeraka
+                {reservationsData.length} primjerak(a)
               </Button>
             </Box>
             <Box className="flex items-center justify-between text-grey-text mb-4">
@@ -330,7 +403,7 @@ export default function IssuedBook() {
                 variant="outlined"
                 className="text-sm font-normal px-3 py-2 border-blue text-blue"
               >
-                0 primjeraka
+                {rentalBooks.length} primjerak(a)
               </Button>
             </Box>
             <Box className="flex items-center justify-between text-grey-text mb-4">
@@ -339,7 +412,7 @@ export default function IssuedBook() {
                 variant="outlined"
                 className="text-sm font-normal px-3 py-2 border-red-500 text-red-500"
               >
-                0 primjeraka
+                {overdueLength} primjerak(a)
               </Button>
             </Box>
             <Box className="flex items-center justify-between text-grey-text">
@@ -348,7 +421,10 @@ export default function IssuedBook() {
                 variant="outlined"
                 className="text-sm font-normal px-3 py-2 border-gray-500 text-gray-500"
               >
-                {data?.number_of_copies_available} primjeraka
+                {Number(data?.number_of_copies_available) +
+                  Number(rentalBooks.length) +
+                  Number(reservationsData.length)}
+                primjerak(a)
               </Button>
             </Box>
           </Box>
@@ -379,6 +455,16 @@ export default function IssuedBook() {
               </div>
             </div>
           </div>
+        )}
+        {showAlert && (
+          <Alert
+            className="mt-4 ml-4 w-[720px]"
+            severity="success"
+            onClose={() => setShowAlert(false)}
+            variant="filled"
+          >
+            Knjiga uspjesno izdata!
+          </Alert>
         )}
       </div>
     )

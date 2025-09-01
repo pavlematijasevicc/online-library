@@ -1,3 +1,4 @@
+'use client'
 import Box from '@mui/material/Box'
 import Image from 'next/image'
 import logo from '../../../public/Vector.png'
@@ -10,10 +11,17 @@ import MenuBookIcon from '@mui/icons-material/MenuBook'
 import ClassOutlinedIcon from '@mui/icons-material/ClassOutlined'
 import { Avatar } from '@mui/material'
 import { useState } from 'react'
+import withAuth from '../withAuth'
+import LogoutIcon from '@mui/icons-material/Logout'
 import Link from 'next/link'
 
-export default function Navbar() {
+function Navbar() {
   const [openMenu, setOpenMenu] = useState<boolean>(false)
+  const [userMenu, setUserMenu] = useState<boolean>(false)
+
+  function handleLogin() {
+    localStorage.removeItem('access_token')
+  }
   return (
     <Box
       sx={{
@@ -52,7 +60,9 @@ export default function Navbar() {
           padding: '16px',
         }}
       >
-        <NotificationsNoneIcon className="mx-2 hover:cursor-pointer text-white" />
+        <Link href={'/activity'}>
+          <NotificationsNoneIcon className="mx-2 hover:cursor-pointer text-white" />
+        </Link>
         <Box sx={{ width: '1px', height: '26px', bgcolor: 'white' }}></Box>
         <AddIcon
           className="mx-2 hover:cursor-pointer text-white"
@@ -64,6 +74,9 @@ export default function Navbar() {
         <Image
           alt="avatar"
           src={avatar}
+          onClick={() => {
+            setUserMenu((pre) => !pre)
+          }}
           className="mr-4 hover:cursor-pointer"
         />
       </Box>
@@ -91,8 +104,23 @@ export default function Navbar() {
           </Box>
         </Box>
       )}
+      {userMenu && (
+        <Box className="py-2 text-grey-text font-normal bg-white text-sm w-[220px] absolute mt-16 z-999999 ml-380 rounded-sm shadow-[0_0_4px_0_rgba(0,0,0,0.25)]">
+          <Box className="px-4 py-3" onClick={() => handleLogin()}>
+            <Link href={'/login'}>
+              <LogoutIcon className="mr-2 w-[24px] h-[24px]" /> Logout
+            </Link>
+          </Box>
+          <Box className="px-4 py-3">
+            <Link href={'/profile'}>
+              <GroupsIcon className="mr-2 w-[24px] h-[24px]" /> Profil
+            </Link>
+          </Box>
+        </Box>
+      )}
     </Box>
   )
 }
 
+export default withAuth(Navbar)
 /*<Avatar alt="Remy Sharp" src="../../../public/Avatar.png" />* nije radilo u kodu kad se ubacilo (prikazivalo slovo R umjesto slike), zato sam koristio Image */

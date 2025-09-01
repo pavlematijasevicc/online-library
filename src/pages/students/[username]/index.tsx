@@ -200,7 +200,7 @@ export default function StudentPage() {
               />
             </TabPanel>
             <TabPanel value="2">
-              <RecordsStudent />
+              <RecordsStudent data={data} />
             </TabPanel>
           </TabContext>
           {showDeleteModal && (

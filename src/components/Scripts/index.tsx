@@ -49,9 +49,9 @@ export default function Scripts() {
         const options = await fetchAllBookOptions()
         console.log('Fetched scripts:', options.scripts)
         const cleanedOptions = options.scripts.map(
-          (b: string, index: number) => ({
+          (b: { value: string; label: string }, index: number) => ({
             id: index,
-            name: b,
+            name: b.label, // ili b.value, zavisi šta hoćeš da prikažeš
           })
         )
         setScripts(cleanedOptions)

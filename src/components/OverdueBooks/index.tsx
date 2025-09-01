@@ -13,21 +13,18 @@ import TableSortLabel from '@mui/material/TableSortLabel'
 import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import Paper from '@mui/material/Paper'
-import Checkbox from '@mui/material/Checkbox'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { visuallyHidden } from '@mui/utils'
 import MoreVertIcon from '@mui/icons-material/MoreVert'
-import { deleteAuthor, fetchAllAuthors } from '@/utils/apiService'
+import { deleteAuthor, getOverdueBooks } from '@/utils/apiService'
 import Link from 'next/link'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import CreateOutlinedIcon from '@mui/icons-material/CreateOutlined'
-import { stringAvatar } from '@/utils/utiles'
 import CircularProgress from '@mui/material/CircularProgress'
-import { Avatar, Button, TextField } from '@mui/material'
-import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined'
 import { getComparator, Order } from '@/utils/utiles'
+import { usePathname } from 'next/navigation'
 
 interface Data {
   id: number
@@ -72,26 +69,19 @@ const headCells: readonly HeadCell[] = [
 ]
 
 interface EnhancedTableProps {
-  numSelected: number
   onRequestSort: (
     event: React.MouseEvent<unknown>,
     property: keyof Data
   ) => void
-  onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void
   order: Order
   orderBy: string
-  rowCount: number
 }
 
-function EnhancedTableHead(props: EnhancedTableProps) {
-  const {
-    onSelectAllClick,
-    order,
-    orderBy,
-    numSelected,
-    rowCount,
-    onRequestSort,
-  } = props
+function EnhancedTableHead({
+  order,
+  orderBy,
+  onRequestSort,
+}: EnhancedTableProps) {
   const createSortHandler =
     (property: keyof Data) => (event: React.MouseEvent<unknown>) => {
       onRequestSort(event, property)
@@ -100,21 +90,15 @@ function EnhancedTableHead(props: EnhancedTableProps) {
   return (
     <TableHead sx={{ backgroundColor: '#F5F7FA' }}>
       <TableRow>
-        <TableCell padding="checkbox">
-          <Checkbox
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllClick}
-          />
-        </TableCell>
         {headCells.map((headCell) => (
           <TableCell
             key={headCell.id}
-            align={'left'}
+            align="left"
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
             sx={{
-              fontWeight: 'normal',
+              fontWeight: 'bold',
+              borderBottom: '2px solid rgba(224,224,224,1)',
             }}
           >
             <TableSortLabel
@@ -123,179 +107,62 @@ function EnhancedTableHead(props: EnhancedTableProps) {
               onClick={createSortHandler(headCell.id)}
             >
               {headCell.label}
-              {orderBy === headCell.id ? (
+              {orderBy === headCell.id && (
                 <Box component="span" sx={visuallyHidden}>
                   {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
                 </Box>
-              ) : null}
+              )}
             </TableSortLabel>
           </TableCell>
         ))}
-        <TableCell align="right" padding="normal">
-          {/* prazno zaglavlje za dugme */}
-        </TableCell>
       </TableRow>
     </TableHead>
   )
-}
-interface EnhancedTableToolbarProps {
-  numSelected: number
-}
-
-function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
-  const { numSelected } = props
-  return numSelected > 0 ? (
-    <Toolbar
-      sx={[
-        {
-          pl: { sm: 2 },
-          pr: { xs: 1, sm: 1 },
-        },
-        {
-          bgcolor: (theme) =>
-            alpha(
-              theme.palette.primary.main,
-              theme.palette.action.activatedOpacity
-            ),
-        },
-      ]}
-    >
-      <Typography
-        sx={{ flex: '1 1 100%' }}
-        color="inherit"
-        variant="subtitle1"
-        component="div"
-      >
-        Izbrisi {numSelected} autora
-      </Typography>
-
-      <Tooltip title="Izbrisi">
-        <IconButton>
-          <DeleteIcon />
-        </IconButton>
-      </Tooltip>
-    </Toolbar>
-  ) : null
-}
-
-const calculateOverdueDays = (
-  issueDate: string,
-  retentionStatus: string
-): number => {
-  if (retentionStatus !== 'U prekoračenju') return 0
-
-  const issue = new Date(issueDate)
-  const now = new Date()
-  const diffTime = Math.max(0, now.getTime() - issue.getTime())
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-
-  return diffDays > 14 ? diffDays - 14 : 0
 }
 
 export default function OverdueBooks() {
   const [order, setOrder] = React.useState<Order>('asc')
   const [orderBy, setOrderBy] = React.useState<keyof Data>('issuedTo')
-  const [selected, setSelected] = React.useState<readonly number[]>([])
   const [page, setPage] = React.useState(0)
   const [rowsPerPage, setRowsPerPage] = React.useState(5)
-  const [data, setData] = useState<Data[]>([
-    {
-      id: 1,
-      issuedTo: 'Marko Marković',
-      issueDate: '2025-02-20',
-      overdueDays: 5,
-      retentionStatus: '3 mjeseca i 30 dana',
-    },
-    {
-      id: 2,
-      issuedTo: 'Ana Anić',
-      issueDate: '2025-03-15',
-      overdueDays: 3,
-      retentionStatus: '3 mjeseca i 3 dana',
-    },
-    {
-      id: 3,
-      issuedTo: 'Petar Petrović',
-      issueDate: '2025-04-10',
-      overdueDays: 2,
-      retentionStatus: '2 mjeseca i 8 dana',
-    },
-    {
-      id: 4,
-      issuedTo: 'Jelena Jelić',
-      issueDate: '2025-03-30',
-      overdueDays: 1,
-      retentionStatus: '2 mjeseca i 19 dana',
-    },
-    {
-      id: 5,
-      issuedTo: 'Luka Lukić',
-      issueDate: '2025-02-25',
-      overdueDays: 6,
-      retentionStatus: '3 mjeseca i 24 dana',
-    },
-  ])
-
+  const [data, setData] = useState<Data[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
-  const [openMenu, setOpenMenu] = useState<number | null>(null)
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [authorToDelete, setAuthorToDelete] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [bookId, setBookId] = useState<number>()
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const path = usePathname()
 
-  /*useEffect(() => {
-        const loadAuthors = async () => {
-          setLoading(true)
-          try {
-            const authors = await fetchAllAuthors(20)
-            setData(authors.data.data)
-          } catch (error) {
-            console.error('Greška prilikom učitavanja autora:', error)
-            setError('Nije moguće učitati autore. Pokušajte ponovo kasnije.')
-          } finally {
-            setLoading(false)
-          }
-        }
-    
-        loadAuthors()
-      }, [])
-    
-      console.log('Data:', data)
-    */
-  function toggleMenu(id: number | null) {
-    setOpenMenu(id)
-  }
-
-  function closeMenu() {
-    setOpenMenu(null)
-  }
-
-  const handleDeleteAuthor = async (id: number) => {
-    try {
-      await deleteAuthor(id)
-      setShowDeleteModal(false)
-      setAuthorToDelete(null)
-      window.location.reload()
-    } catch (err) {
-      alert('Greška pri brisanju autora.')
+  useEffect(() => {
+    if (path) {
+      const parts = path.split('/')
+      setBookId(Number(parts[2]))
     }
-  }
+  }, [path])
 
-  const deleteConfirmation = (id: number) => {
-    setAuthorToDelete(id)
-    setShowDeleteModal(true)
-    closeMenu()
-  }
+  useEffect(() => {
+    if (bookId) {
+      setLoading(true)
+      getOverdueBooks({ book_id: bookId, per_page: 20 })
+        .then((res) => {
+          const mappedData: Data[] = res.data.data.map((item: any) => ({
+            id: item.rental_id,
+            issuedTo: `${item.rented_by.name} ${item.rented_by.last_name}`,
+            issueDate: item.rental_date.split(' ')[0], // samo datum bez vremena
+            overdueDays: item.days_overdue,
+            retentionStatus: `${item.total_rental_days} dana`,
+          }))
+          setData(mappedData)
+        })
+        .finally(() => setLoading(false))
+    }
+  }, [bookId])
 
-  const closeDeleteModal = () => {
-    setAuthorToDelete(null)
-    setShowDeleteModal(false)
-  }
-  let rows = data.filter((row) =>
-    row.issuedTo.toLowerCase().includes(searchQuery.toLowerCase())
+  let rows = data.filter(
+    (row) =>
+      row.overdueDays > 0 &&
+      row.issuedTo.toLowerCase().includes(searchQuery.toLowerCase())
   )
-
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
     property: keyof Data
@@ -305,43 +172,8 @@ export default function OverdueBooks() {
     setOrderBy(property)
   }
 
-  const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.checked) {
-      const newSelected = rows.map((n) => n.id)
-      setSelected(newSelected)
-      return
-    }
-    setSelected([])
-  }
-
-  const handleClick = (
-    event: React.ChangeEvent<HTMLInputElement>,
-    id: number
-  ) => {
-    const selectedIndex = selected.indexOf(id)
-    let newSelected: readonly number[] = []
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, id)
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1))
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1))
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      )
-    }
-    setSelected(newSelected)
-  }
-
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage)
-  }
-
-  const handleIconClick = () => {
-    inputRef.current?.focus()
   }
 
   const handleChangeRowsPerPage = (
@@ -390,9 +222,8 @@ export default function OverdueBooks() {
     )
   } else
     return (
-      <Box sx={{ width: '1150px' }} className="ml-4">
+      <Box sx={{ width: '1120px' }} className="ml-4">
         <Paper sx={{ width: '100%', mb: 2 }}>
-          <EnhancedTableToolbar numSelected={selected.length} />
           <TableContainer>
             <Table
               sx={{
@@ -407,98 +238,47 @@ export default function OverdueBooks() {
               size="medium"
             >
               <EnhancedTableHead
-                numSelected={selected.length}
                 order={order}
                 orderBy={orderBy}
-                onSelectAllClick={handleSelectAllClick}
                 onRequestSort={handleRequestSort}
-                rowCount={rows.length}
               />
               <TableBody>
-                {visibleRows.map((row, index) => {
-                  const isItemSelected = selected.includes(row.id)
-                  const labelId = `enhanced-table-checkbox-${index}`
+                {rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={headCells.length + 2} align="center">
+                      <Typography variant="body1" sx={{ py: 3 }}>
+                        Trenutno nema knjiga u prekoracenju
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  visibleRows.map((row, index) => {
+                    const labelId = `enhanced-table-checkbox-${index}`
 
-                  return (
-                    <TableRow
-                      hover
-                      role="checkbox"
-                      aria-checked={isItemSelected}
-                      tabIndex={-1}
-                      key={row.issuedTo}
-                      selected={isItemSelected}
-                      sx={{ cursor: 'pointer' }}
-                    >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          sx={{ verticalAlign: 'middle' }}
-                          color="primary"
-                          checked={isItemSelected}
-                          onChange={(event) => handleClick(event, row.id)}
-                          inputProps={{
-                            'aria-labelledby': labelId,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell align="left">{row.issueDate}</TableCell>
-                      <TableCell align="left">{row.issuedTo}</TableCell>
-                      <TableCell
-                        align="left"
-                        sx={{ color: row.overdueDays > 0 ? 'red' : 'inherit' }}
+                    return (
+                      <TableRow
+                        hover
+                        tabIndex={-1}
+                        key={row.issuedTo}
+                        sx={{ cursor: 'pointer' }}
                       >
-                        {row.overdueDays}
-                      </TableCell>
-                      <TableCell align="left">{row.retentionStatus}</TableCell>
-
-                      <TableCell align="right">
-                        <div
-                          onClick={
-                            openMenu === index
-                              ? () => closeMenu()
-                              : () => toggleMenu(index)
-                          }
+                        <TableCell align="left">{row.issueDate}</TableCell>
+                        <TableCell align="left">{row.issuedTo}</TableCell>
+                        <TableCell
+                          align="left"
+                          sx={{
+                            color: row.overdueDays > 0 ? 'red' : 'inherit',
+                          }}
                         >
-                          <MoreVertIcon className="hover:cursor-pointer" />
-                        </div>
-                        {openMenu === index && (
-                          <>
-                            <div
-                              className="fixed inset-0 bg-transparent"
-                              onClick={() => setOpenMenu(null)}
-                            ></div>
-                            <div className="absolute w-[320px] -ml-80 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
-                              <Link href={`/books/${row.id}`}>
-                                <div className="capitalize px-4 py-3 flex items-center">
-                                  <CreateOutlinedIcon
-                                    sx={{
-                                      width: '20px',
-                                      height: '20px',
-                                    }}
-                                    className="mr-1"
-                                  />
-                                  Izmjeni knjigu
-                                </div>
-                              </Link>
-                              <div
-                                className="capitalize px-4 py-3 flex items-center hover:cursor-pointer"
-                                onClick={() => deleteConfirmation(row.id)}
-                              >
-                                <DeleteOutlineIcon
-                                  sx={{
-                                    width: '20px',
-                                    height: '20px',
-                                  }}
-                                  className="mr-1"
-                                />
-                                Izbrisi knjigu
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  )
-                })}
+                          {row.overdueDays}
+                        </TableCell>
+                        <TableCell align="left">
+                          {row.retentionStatus}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
+                )}
 
                 {emptyRows > 0 && (
                   <TableRow
@@ -522,39 +302,6 @@ export default function OverdueBooks() {
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
         </Paper>
-        {showDeleteModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            {/* Overlay */}
-            <div
-              className="fixed inset-0 bg-black opacity-50"
-              onClick={closeDeleteModal}
-            ></div>
-
-            {/* Modal box */}
-            <div className="z-50 bg-white p-6 rounded-xl shadow-lg w-[320px] relative text-center">
-              <p className="text-gray-800 text-base font-medium mb-6">
-                Da li ste sigurni da želite da izbrišete knjigu?
-              </p>
-              <div className="flex justify-between">
-                <button
-                  onClick={() => {
-                    if (authorToDelete !== null)
-                      handleDeleteAuthor(authorToDelete)
-                  }}
-                  className="uppercase w-[124px] text-sm font-medium py-2 px-4 bg-blue text-white rounded hover:bg-blue-500 transition-colors duration-200 hover:cursor-pointer"
-                >
-                  Potvrdi
-                </button>
-                <button
-                  onClick={closeDeleteModal}
-                  className="uppercase w-[124px] bg-blue text-sm font-medium py-2 px-4 text-white rounded hover:cursor-pointer  hover:bg-blue-500 transition-colors duration-200"
-                >
-                  Poništi
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </Box>
     )
 }

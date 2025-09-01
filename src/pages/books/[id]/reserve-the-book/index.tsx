@@ -9,38 +9,91 @@ import HistoryEduOutlinedIcon from '@mui/icons-material/HistoryEduOutlined'
 import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import CloseIcon from '@mui/icons-material/Close'
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
-import { DatePicker } from '@mui/x-date-pickers/DatePicker'
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 import {
+  Alert,
   Box,
   Button,
   FormControl,
+  FormHelperText,
   InputLabel,
   MenuItem,
   Select,
   TextField,
 } from '@mui/material'
-import { BookData } from '../../../../../types'
-import { deleteBook, fetchBookById } from '@/utils/apiService'
+import {
+  ActiveUser,
+  BookData,
+  OverdueRecord,
+  Rental,
+  RentalRecord,
+} from '../../../../../types'
+import {
+  createRental,
+  createReservation,
+  createReservationByStudent,
+  deleteBook,
+  fetchBookById,
+  getActiveRentals,
+  getActiveReservations,
+  getAllStudents,
+  getOverdueBooks,
+} from '@/utils/apiService'
+import { Reservation } from '@/components/ActiveReservationsTable'
+
+interface StudentData {
+  id: number
+  fullName: string
+}
 
 export default function ReserveTheBook() {
-  const [openMenu, setOpenMenu] = useState<boolean>(false)
+  const [openMenu, setOpenMenu] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [pupil, setPupil] = useState<string>('')
+  const [reservationData, setReservationData] = useState<{
+    book_id: number
+    student_id: number
+  }>({
+    book_id: 0,
+    student_id: 0,
+  })
+  const [studentsData, setStudentsData] = useState<StudentData[]>([])
+  const [studentError, setStudentError] = useState(false)
   const [id, setId] = useState<number>()
-  const nameInputRef = useRef<HTMLInputElement>(null)
-  const [issueDate, setIssueDate] = useState<Date | null>(null)
-  const [returnDate, setReturnDate] = useState<Date | null>(null)
+  const [showAlert, setShowAlert] = useState(false)
   const [data, setData] = useState<BookData>()
+  const [rentalBooks, setRentalBooks] = useState<RentalRecord[]>()
+  const [overdueBooks, setOverdueBooks] = useState<OverdueRecord[]>([])
+  const [overdueLength, setOverdueLength] = useState<number>()
+  const [reservationsData, setReservationsData] = useState<Reservation[]>([])
   const router = useRouter()
   const path = usePathname()
+  const [user, setUser] = useState<ActiveUser | null>(null)
+
+  useEffect(() => {
+    const userString = localStorage.getItem('user')
+    if (userString) {
+      const parsedUser: ActiveUser = JSON.parse(userString)
+      console.log('User ucitan iz localStorage:', parsedUser)
+      setUser(parsedUser)
+    }
+  }, [])
+
+  console.log('user:', user)
+
+  useEffect(() => {
+    setOverdueLength(
+      overdueBooks.filter((book) => {
+        return book.days_overdue > 0
+      }).length
+    )
+  }, [overdueBooks])
 
   useEffect(() => {
     if (path) {
       try {
-        let string = path.split('/')
-        setId(Number(string[2]))
+        const string = path.split('/')
+        const parsedId = Number(string[2])
+        setId(parsedId)
+        setReservationData((prev) => ({ ...prev, book_id: parsedId })) // postavi book_id
       } catch (error) {
         console.error('Greška prilikom učitavanja knjige:', error)
       }
@@ -54,11 +107,97 @@ export default function ReserveTheBook() {
         setData(book.book)
       }
 
+      const loadRentals = async () => {
+        const rentals = await getActiveRentals({
+          book_id: id,
+          per_page: 20,
+        })
+        setRentalBooks(rentals.data.data)
+      }
+      const loadOverdue = async () => {
+        const overdue = await getOverdueBooks({ book_id: id, per_page: 20 })
+        setOverdueBooks(overdue.data.data)
+      }
+      const loadReservations = async () => {
+        const rentals = await getActiveReservations()
+        const reservations = rentals.reservations.data
+        console.log('reservations:', reservations)
+        const reservation = reservations.filter((res: Reservation) => {
+          return res.book_id === id
+        })
+
+        setReservationsData(reservation)
+      }
+
+      loadReservations()
+
+      loadRentals()
+      loadOverdue()
       loadBook()
     }
   }, [id])
 
+  async function handleReservation() {
+    if (!reservationData.student_id) {
+      setStudentError(true)
+      return
+    }
+    try {
+      await createReservation(
+        reservationData.book_id,
+        reservationData.student_id
+      )
+      console.log('Knjiga uspešno rezervisana!')
+      setShowAlert(true)
+    } catch (error: any) {
+      console.log('Greška prilikom rezervacije knjige', error)
+    }
+  }
+
+  async function handleReservationByStudent() {
+    try {
+      await createReservationByStudent(reservationData.book_id)
+      console.log('Poslat zathtjev za rezervacijom!')
+      setShowAlert(true)
+    } catch (error: any) {
+      console.log('Greška prilikom rezervacije knjige', error)
+    }
+  }
+
+  function deleteFields(e: React.FormEvent) {
+    e.preventDefault()
+    setReservationData((prev) => ({ ...prev, student_id: 0 }))
+    setStudentError(false)
+  }
+
   console.log('Data:', data)
+
+  function handleAlert() {
+    setShowAlert(true)
+  }
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const response = await getAllStudents(50, '', 1)
+
+        const fetchedStudents = response.data.data || []
+
+        const mapped: StudentData[] = fetchedStudents.map((student: any) => ({
+          id: student.id,
+          fullName: `${student.first_name || ''} ${
+            student.last_name || ''
+          }`.trim(),
+        }))
+
+        setStudentsData(mapped)
+      } catch (error) {
+        console.log('greska prilikom ucitavanja ucenika!')
+      }
+    }
+
+    fetchStudents()
+  }, [])
 
   const handleDeleteBook = async (id: number) => {
     try {
@@ -83,34 +222,7 @@ export default function ReserveTheBook() {
     setOpenMenu((prev) => !prev)
   }
 
-  const handleEditClick = () => {
-    setTimeout(() => {
-      nameInputRef.current?.focus()
-    }, 0)
-  }
-
-  const handleIssueBook = () => {
-    console.log('issued')
-  }
-
-  function deleteFields(e: React.FormEvent) {
-    /* e.preventDefault()
-      setBookData((pre: BookData) => ({
-        ...pre,
-        name: '',
-        description: '',
-        categories: [],
-        genres: [],
-        publishers: [],
-        authors: [],
-        year: null,
-        number_of_copies_available: null,
-      }))
-      setBookNameError(null)
-      setSubmitted(false)*/
-  }
-
-  if (path)
+  if (path && overdueBooks && rentalBooks && reservationData && user)
     return (
       <div className="py-3 text-xl font-medium overflow-y-hidden">
         <div className="px-4 flex justify-between">
@@ -184,12 +296,7 @@ export default function ReserveTheBook() {
                 ></div>
                 <div className="absolute w-[320px] -mr-40 mt-40 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-90 text-left">
                   <Link href={`${path.split('/').slice(0, -1).join('/')}`}>
-                    <div
-                      className="capitalize px-4 py-3 hover:cursor-pointer"
-                      onClick={() => {
-                        handleEditClick()
-                      }}
-                    >
+                    <div className="capitalize px-4 py-3 hover:cursor-pointer">
                       <CreateOutlinedIcon
                         sx={{
                           width: '20px',
@@ -218,89 +325,98 @@ export default function ReserveTheBook() {
             )}
           </div>
         </div>
-        <Box
-          className="pl-4 pt-8"
-          sx={{
-            display: 'flex',
-          }}
-        >
-          <Box
-            component="form"
-            onSubmit={handleIssueBook}
-            sx={{
-              width: 720,
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <h2 className="pb-4 font-medium text-xl">Rezervisi knjigu</h2>
-            <FormControl sx={{ minWidth: 120 }} className="mb-3">
-              <InputLabel id="demo-simple-select-helper-label">
-                Izaberite ucenika..
-              </InputLabel>
-              <Select
-                labelId="demo-simple-select-helper-label"
-                id="demo-simple-select-helper"
-                label="ucenik"
+        <Box className="flex">
+          <Box className="pl-4 pt-8" sx={{ display: 'flex' }}>
+            {user.role === 'librarian' ? (
+              <Box
+                component="form"
+                sx={{
+                  width: 720,
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
               >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
-                <MenuItem value={10}>Ten</MenuItem>
-                <MenuItem value={20}>Twenty</MenuItem>
-                <MenuItem value={30}>Thirty</MenuItem>
-              </Select>
-            </FormControl>
-            <LocalizationProvider dateAdapter={AdapterDateFns}>
-              <Box display="flex" gap="16px" className="mb-6">
-                <DatePicker
-                  label="Datum izdavanja"
-                  value={issueDate}
-                  onChange={(newValue) => setIssueDate(newValue)}
-                  slotProps={{
-                    textField: {
-                      placeholder: 'Unesite datum',
-                      helperText: 'Format dd/mm/yyyy',
-                      fullWidth: true,
-                    },
-                  }}
-                />
-
-                <DatePicker
-                  label="Datum vraćanja"
-                  value={returnDate}
-                  onChange={(newValue) => setReturnDate(newValue)}
-                  slotProps={{
-                    textField: {
-                      placeholder: 'Datum vraćanja',
-                      helperText: 'Rok vraćanja: 30 dana',
-                      fullWidth: true,
-                    },
-                  }}
-                />
+                <h2 className="pb-4 font-medium text-xl">Rezervisi knjigu</h2>
+                <FormControl
+                  sx={{ minWidth: 120 }}
+                  className="mb-3"
+                  error={studentError}
+                >
+                  <InputLabel id="demo-simple-select-helper-label">
+                    Izaberite ucenika..
+                  </InputLabel>
+                  <Select
+                    labelId="demo-simple-select-helper-label"
+                    id="demo-simple-select-helper"
+                    value={reservationData?.student_id || ''}
+                    onChange={(e) => {
+                      setReservationData((prev) => ({
+                        ...prev!,
+                        student_id: Number(e.target.value),
+                      }))
+                      setStudentError(false)
+                    }}
+                  >
+                    {studentsData.map((student) => (
+                      <MenuItem value={student.id} key={student.id}>
+                        {student.fullName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {studentError && (
+                    <FormHelperText>Morate izabrati učenika</FormHelperText>
+                  )}
+                </FormControl>
+                <Box className="flex ml-auto">
+                  <Button
+                    onClick={() => handleReservation()}
+                    variant="contained"
+                    type="button"
+                    className="uppercase text-sm font-medium pt-[10px] px-4 bg-blue mr-2 self-end"
+                  >
+                    <WavingHandOutlinedIcon className="mr-2" />
+                    Rezervisi knjigu
+                  </Button>
+                  <Button
+                    variant="contained"
+                    type="button"
+                    className="uppercase w-[124px] text-sm font-medium pt-[10px] px-4 bg-transparent self-end text-blue border-blue border-1"
+                    onClick={deleteFields}
+                  >
+                    <CloseIcon className="mr-1" />
+                    Ponisti
+                  </Button>
+                </Box>
               </Box>
-            </LocalizationProvider>
-            <Box className="flex ml-auto">
-              <Button
-                variant="contained"
-                type="submit"
-                className="uppercase text-sm font-medium pt-[10px] px-4 bg-blue mr-2 self-end"
+            ) : (
+              <Box
+                component="form"
+                sx={{
+                  width: 720,
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
               >
-                <WavingHandOutlinedIcon className="mr-2" />
-                Rezervisi knjigu
-              </Button>
-              <Button
-                variant="contained"
-                type="button"
-                className="uppercase w-[124px] text-sm font-medium pt-[10px] px-4 bg-transparent self-end text-blue border-blue border-1"
-                onClick={deleteFields}
-              >
-                <CloseIcon className="mr-1" />
-                Ponisti
-              </Button>
-            </Box>
+                <p className="mb-4 text-xl font-normal">
+                  Molim Vas potvrdite da zelite da rezervisete knjigu
+                  <span className="font-semibold"> {data?.name} </span>?
+                </p>
+                <Box className="flex">
+                  <Button
+                    onClick={() => handleReservationByStudent()}
+                    variant="contained"
+                    type="button"
+                    className="uppercase text-sm font-medium pt-[10px] px-4 bg-blue mr-2 self-start"
+                  >
+                    <WavingHandOutlinedIcon className="mr-2" />
+                    Rezervisi knjigu
+                  </Button>
+                </Box>
+              </Box>
+            )}
           </Box>
-          <Box className="ml-16 text-base w-[350px] border-grey-line border-1 p-4">
+
+          <Box className="ml-16 text-base w-[350px] border-grey-line border-1 p-4 mt-8">
             <h3 className="font-medium text-base mb-8">Kolicine</h3>
             <Box className="flex items-center justify-between text-grey-text mb-4">
               Na raspolaganju:
@@ -317,7 +433,7 @@ export default function ReserveTheBook() {
                 variant="outlined"
                 className="text-sm font-normal px-3 py-2 text-orange-400 border-orange-400"
               >
-                0 primjeraka
+                {reservationsData.length} primjerak(a)
               </Button>
             </Box>
             <Box className="flex items-center justify-between text-grey-text mb-4">
@@ -326,7 +442,7 @@ export default function ReserveTheBook() {
                 variant="outlined"
                 className="text-sm font-normal px-3 py-2 border-blue text-blue"
               >
-                0 primjeraka
+                {rentalBooks.length} primjerak(a)
               </Button>
             </Box>
             <Box className="flex items-center justify-between text-grey-text mb-4">
@@ -335,7 +451,7 @@ export default function ReserveTheBook() {
                 variant="outlined"
                 className="text-sm font-normal px-3 py-2 border-red-500 text-red-500"
               >
-                0 primjeraka
+                {overdueLength} primjerak(a)
               </Button>
             </Box>
             <Box className="flex items-center justify-between text-grey-text">
@@ -344,11 +460,15 @@ export default function ReserveTheBook() {
                 variant="outlined"
                 className="text-sm font-normal px-3 py-2 border-gray-500 text-gray-500"
               >
-                {data?.number_of_copies_available} primjeraka
+                {Number(data?.number_of_copies_available) +
+                  Number(rentalBooks.length) +
+                  Number(reservationsData.length)}
+                primjerak(a)
               </Button>
             </Box>
           </Box>
         </Box>
+
         {showDeleteModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div
@@ -375,6 +495,18 @@ export default function ReserveTheBook() {
               </div>
             </div>
           </div>
+        )}
+        {showAlert && (
+          <Alert
+            className="mt-6 w-[600px] mx-4"
+            severity="success"
+            onClose={() => setShowAlert(false)}
+            variant="filled"
+          >
+            {user.role === 'librarian'
+              ? 'Knjiga uspjesno rezervisana!'
+              : 'Poslat zahtjev za rezervacijom!'}
+          </Alert>
         )}
       </div>
     )

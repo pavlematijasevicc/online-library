@@ -152,48 +152,10 @@ export default function LibrarianPage() {
 
         <Box
           sx={{ width: '100%', typography: 'body1' }}
-          className="mt-[10px] mb-0"
+          className="mt-[10px] mb-0 px-4"
         >
-          <TabContext value={value}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <TabList
-                onChange={handleChange}
-                aria-label="lab API tabs example"
-                TabIndicatorProps={{
-                  style: {
-                    backgroundColor: '#3392EA',
-                  },
-                }}
-              >
-                <Tab
-                  label="Osnovni detalji"
-                  value="1"
-                  className="p-4 text-sm font-normal ml-4"
-                  sx={{
-                    '&.Mui-selected': {
-                      color: '#3392EA', // boja kada je tab aktivan
-                    },
-                  }}
-                />
-                <Tab
-                  label="Evidencija iznajmljivanja"
-                  value="2"
-                  className="p-4 text-sm font-normal ml-4"
-                  sx={{
-                    '&.Mui-selected': {
-                      color: '#3392EA', // boja kada je tab aktivan
-                    },
-                  }}
-                />
-              </TabList>
-            </Box>
-            <TabPanel value="1">
-              <EditLibrarian data={data} nameInputRef={nameInputRef} />
-            </TabPanel>
-            <TabPanel value="2">
-              <RecordsStudent />
-            </TabPanel>
-          </TabContext>
+          <EditLibrarian data={data} nameInputRef={nameInputRef} />
+
           {showDeleteModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center">
               <div

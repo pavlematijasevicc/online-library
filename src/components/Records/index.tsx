@@ -8,8 +8,14 @@ import { useState } from 'react'
 import PublishedBooksTable from '../PublishedBooksTable'
 import ReturnedBooks from '../ReturnedBooks'
 import OverdueBooks from '../OverdueBooks'
+import ActiveReservationsTable from '../ActiveReservationsTable'
+import ArchivedReservationsTable from '../ArchivedReservationsTable'
 
-export default function Records() {
+type RecordsProps = {
+  id:number
+}
+
+export default function Records({ id }: RecordsProps) {
   const [activeItem, setActiveItem] = useState<number>(1)
   return (
     <Box className="flex">
@@ -65,9 +71,11 @@ export default function Records() {
           <EventNoteIcon className="mr-4" /> Arhivirane rezervacije
         </Box>
       </Box>
-      {activeItem === 1 && <PublishedBooksTable />}
+      {activeItem === 1 && <PublishedBooksTable width={1120} />}
       {activeItem === 2 && <ReturnedBooks />}
       {activeItem === 3 && <OverdueBooks />}
+      {activeItem === 4 && <ActiveReservationsTable id={id} />}
+      {activeItem===5 && <ArchivedReservationsTable id={id}/>}
     </Box>
   )
 }

@@ -1,4 +1,5 @@
 import {
+  cancelRes,
   confirmReservation,
   createRentalFromReservation,
   getActiveReservations,
@@ -29,6 +30,7 @@ import {
   Typography,
 } from '@mui/material'
 import Link from 'next/link'
+import useRole from '@/hooks/useRole'
 
 interface Data {
   id: number
@@ -125,6 +127,7 @@ export default function PublicationActiveReservations() {
   const [openMenu, setOpenMenu] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const role = useRole()
 
   useEffect(() => {
     const loadReservations = async () => {
@@ -166,6 +169,15 @@ export default function PublicationActiveReservations() {
   const rejectRes = async (reservation_id: number) => {
     try {
       await rejectReservation(reservation_id)
+      await loadReservations() // <--- osvježi tabelu
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
+  const closeReservation = async (reservation_id: number) => {
+    try {
+      await cancelRes(reservation_id)
       await loadReservations() // <--- osvježi tabelu
     } catch (error) {
       console.log(error)
@@ -338,10 +350,19 @@ export default function PublicationActiveReservations() {
                       )}
                       {row.status === 'pending' && (
                         <Box className="flex">
-                          <Button onClick={() => confirmation(row.id)}>
-                            <CheckIcon className="text-grey-text w-[24px]" />
-                          </Button>
-                          <Button onClick={() => rejectRes(row.id)}>
+                          {role === 'librarian' && (
+                            <Button onClick={() => confirmation(row.id)}>
+                              <CheckIcon className="text-grey-text w-[24px]" />
+                            </Button>
+                          )}
+
+                          <Button
+                            onClick={
+                              role === 'librarian'
+                                ? () => rejectRes(row.id)
+                                : () => closeReservation(row.id)
+                            }
+                          >
                             <CloseIcon className="text-grey-text w-[24px]" />
                           </Button>
                         </Box>
@@ -357,7 +378,7 @@ export default function PublicationActiveReservations() {
                     </TableCell>
 
                     <TableCell align="right">
-                      {row.status !== 'pending' && (
+                      {row.status === 'reserved' && (
                         <Box
                           onClick={
                             openMenu === index
@@ -374,7 +395,9 @@ export default function PublicationActiveReservations() {
                               ></Box>
 
                               <Box className="absolute w-[200px] -ml-50 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
-                                <Link href={`/publication/${row.id}`}>
+                                <Link
+                                  href={`/publication/reservations/${row.id}`}
+                                >
                                   <Box className="capitalize px-4 py-3 flex items-center">
                                     <DescriptionOutlinedIcon
                                       sx={{
@@ -386,25 +409,27 @@ export default function PublicationActiveReservations() {
                                     Pogledaj detalje
                                   </Box>
                                 </Link>
-                                <Box
-                                  className="capitalize px-4 py-3 flex items-center"
-                                  onClick={() =>
-                                    rentABook(
-                                      row.id,
-                                      row.book_id,
-                                      row.student_id
-                                    )
-                                  }
-                                >
-                                  <WavingHandOutlinedIcon
-                                    sx={{
-                                      width: '20px',
-                                      height: '20px',
-                                    }}
-                                    className="mr-1"
-                                  />
-                                  Izdaj knjigu
-                                </Box>
+                                {role === 'librarian' && (
+                                  <Box
+                                    className="capitalize px-4 py-3 flex items-center"
+                                    onClick={() =>
+                                      rentABook(
+                                        row.id,
+                                        row.book_id,
+                                        row.student_id
+                                      )
+                                    }
+                                  >
+                                    <WavingHandOutlinedIcon
+                                      sx={{
+                                        width: '20px',
+                                        height: '20px',
+                                      }}
+                                      className="mr-1"
+                                    />
+                                    Izdaj knjigu
+                                  </Box>
+                                )}
                               </Box>
                             </>
                           )}

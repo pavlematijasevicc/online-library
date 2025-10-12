@@ -10,12 +10,17 @@ import TabPanel from '@mui/lab/TabPanel'
 import { Box, Tab } from '@mui/material'
 import { useState } from 'react'
 import Publishers from '@/components/Publishers'
+import useRole from '@/hooks/useRole'
 
 export default function Settings() {
   const [value, setValue] = useState('1')
+  const role=useRole()
   const handleChange = (event: React.SyntheticEvent, newValue: string) => {
     setValue(newValue)
   }
+  
+
+if(role==='librarian')
   return (
     <Box className="py-6 text-xl font-medium">
       <h1 className="ml-4"> Settings </h1>

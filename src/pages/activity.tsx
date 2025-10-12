@@ -6,8 +6,7 @@ import {
   InputLabel,
   FormControl,
 } from '@mui/material'
-import Image from 'next/image'
-import avatar from '/home/pavle/online-library/library/public/Avatar.png'
+
 import { useEffect, useState } from 'react'
 import {
   getActiveRentals,
@@ -16,10 +15,12 @@ import {
   getAllStudents,
   getReturnedBooks,
 } from '@/utils/apiService'
-import { RentalRecord, Activity } from '../../types'
+import { RentalRecord, Activity, ActiveUser } from '../../types'
 import ActivityBox from '@/components/ActivityBox'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import { DisabledByDefault } from '@mui/icons-material'
+import { userAgent } from 'next/server'
+import useRole from '@/hooks/useRole'
 
 export type Reservation = {
   id: number
@@ -62,6 +63,9 @@ export default function ActivityPage() {
   const [reservationsData, setReservationsData] = useState<Reservation[]>([])
   const [dataActivity, setDataActivity] = useState<Activity[]>([])
   const [allActivity, setAllActivity] = useState<boolean>(false)
+  const role = useRole()
+
+  console.log('role:', role)
 
   useEffect(() => {
     const loadRentals = async () => {
@@ -147,7 +151,7 @@ export default function ActivityPage() {
     // spoji sve u jedan niz
     const combined = [...mappedRentals, ...mappedReturns, ...mappedReservations]
 
-    console.log('rezervacije:', reservationsData)
+    //console.log('rezervacije:', reservationsData)
 
     // sortiraj po datumu (najskoriji prvi)
     combined.sort(
@@ -157,6 +161,8 @@ export default function ActivityPage() {
 
     setDataActivity(combined)
   }, [rentalData, returnedBooksData, reservationsData])
+
+  console.log('Activity:', dataActivity)
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -185,8 +191,6 @@ export default function ActivityPage() {
       }
     }
 
-    fetchLibrarians()
-
     const fetchStudents = async () => {
       try {
         const response = await getAllStudents(50, '', 1)
@@ -201,7 +205,8 @@ export default function ActivityPage() {
       }
     }
 
-    fetchStudents()
+    fetchStudents() // ispravim
+    fetchLibrarians()
 
     fetchBooks()
   }, [])
@@ -252,38 +257,42 @@ export default function ActivityPage() {
         <h1>Prikaz Aktivnosti</h1>
 
         {/* Filteri */}
-        <Box className="flex gap-4 mt-10">
-          <FormControl size="small" className="w-[170px]">
-            <InputLabel>Učenici</InputLabel>
-            <Select
-              value={selectedStudent}
-              label="Učenici"
-              onChange={(e) => setSelectedStudent(e.target.value)}
-            >
-              <MenuItem value="Svi">Svi</MenuItem>
-              {students.map((student) => (
-                <MenuItem key={student} value={student}>
-                  {student}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
 
-          <FormControl size="small" className="w-[170px]">
-            <InputLabel>Bibliotekari</InputLabel>
-            <Select
-              value={selectedLibrarian}
-              label="Bibliotekari"
-              onChange={(e) => setSelectedLibrarian(e.target.value)}
-            >
-              <MenuItem value="Svi">Svi</MenuItem>
-              {librarians.map((lib) => (
-                <MenuItem key={lib} value={lib}>
-                  {lib}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+        <Box className="flex gap-4 mt-10">
+          {role === 'librarian' && (
+            <>
+              <FormControl size="small" className="w-[170px]">
+                <InputLabel>Učenici</InputLabel>
+                <Select
+                  value={selectedStudent}
+                  label="Učenici"
+                  onChange={(e) => setSelectedStudent(e.target.value)}
+                >
+                  <MenuItem value="Svi">Svi</MenuItem>
+                  {students.map((student) => (
+                    <MenuItem key={student} value={student}>
+                      {student}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl size="small" className="w-[170px]">
+                <InputLabel>Bibliotekari</InputLabel>
+                <Select
+                  value={selectedLibrarian}
+                  label="Bibliotekari"
+                  onChange={(e) => setSelectedLibrarian(e.target.value)}
+                >
+                  <MenuItem value="Svi">Svi</MenuItem>
+                  {librarians.map((lib) => (
+                    <MenuItem key={lib} value={lib}>
+                      {lib}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>{' '}
+            </>
+          )}
 
           <FormControl size="small" className="w-[170px]">
             <InputLabel>Knjige</InputLabel>
@@ -333,9 +342,11 @@ export default function ActivityPage() {
         </Box>
 
         {/* Aktivnosti */}
-        <Box className="mb-8 mt-6">
+        <Box className="mt-6">
           {filteredActivity.slice(0, 9).map((activity) => (
             <ActivityBox
+              roleUser={role}
+              id={activity.rental_id}
               key={`${activity.role}-${activity.rental_id}`}
               librarian={activity.librarian}
               role={activity.role}
@@ -349,10 +360,12 @@ export default function ActivityPage() {
         </Box>
 
         {allActivity && (
-          <Box className="mb-8">
+          <Box>
             {filteredActivity.slice(9).map((activity) => (
               <ActivityBox
+                roleUser={role}
                 key={`${activity.role}-${activity.rental_id}`}
+                id={activity.rental_id}
                 librarian={activity.librarian}
                 role={activity.role}
                 book_title={activity.book_title}
@@ -366,7 +379,7 @@ export default function ActivityPage() {
         )}
 
         <Button
-          className="bg-transparent text-blue border-[1px] border-blue w-[800px]"
+          className="bg-transparent text-blue border-[1px] border-blue w-[800px] mt-8"
           onClick={() => setAllActivity((pre) => !pre)}
         >
           {allActivity === true ? 'Show less' : 'Show'}

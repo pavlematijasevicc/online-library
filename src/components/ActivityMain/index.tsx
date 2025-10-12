@@ -36,7 +36,11 @@ export type Reservation = {
   }
 }
 
-export default function ActivityMain() {
+type Props = {
+  role: string
+}
+
+export default function ActivityMain({ role }: Props) {
   const [rentalData, setRentalData] = useState<RentalRecord[]>()
   const [returnedBooksData, setReturnedBooksData] = useState<any[]>([])
   const [reservationsData, setReservationsData] = useState<Reservation[]>([])
@@ -138,12 +142,13 @@ export default function ActivityMain() {
 
   return (
     <Box className="w-[1000px]">
-      
       {/* Aktivnosti */}
       <Box className="mt-10">
         <h2 className="font-normal text-base">Aktivnosti</h2>
         {dataActivity.slice(0, 10).map((activity) => (
           <ActivityBox
+            roleUser={role}
+            id={activity.rental_id}
             key={`${activity.role}-${activity.rental_id}`}
             librarian={activity.librarian}
             role={activity.role}

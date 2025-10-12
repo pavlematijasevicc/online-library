@@ -310,18 +310,18 @@ export default function GenresTable() {
             </p>
             <div className="flex justify-between">
               <button
+                onClick={closeDeleteModal}
+                className="uppercase w-[124px] bg-white text-sm font-medium py-2 px-4 border-1 border-blue text-blue rounded hover:cursor-pointer"
+              >
+                Poništi
+              </button>
+              <button
                 onClick={() => {
                   if (genreToDelete !== null) handleDeleteGenre(genreToDelete)
                 }}
                 className="uppercase w-[124px] text-sm font-medium py-2 px-4 bg-blue text-white rounded hover:bg-blue-500 transition-colors duration-200 hover:cursor-pointer"
               >
                 Potvrdi
-              </button>
-              <button
-                onClick={closeDeleteModal}
-                className="uppercase w-[124px] bg-blue text-sm font-medium py-2 px-4 text-white rounded hover:cursor-pointer  hover:bg-blue-500 transition-colors duration-200"
-              >
-                Poništi
               </button>
             </div>
           </div>

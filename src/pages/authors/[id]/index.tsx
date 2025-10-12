@@ -25,6 +25,7 @@ import { checkIme, checkPrezime } from '@/utils/utiles'
 import CheckIcon from '@mui/icons-material/Check'
 import PhotoIcon from '@mui/icons-material/Photo'
 import { useRouter } from 'next/router'
+import useRole from '@/hooks/useRole'
 
 export default function ShowAuthor() {
   const [data, setData] = useState<Author>()
@@ -46,6 +47,9 @@ export default function ShowAuthor() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const path = usePathname()
   let router = useRouter()
+  const role = useRole()
+
+  console.log('role:', role)
 
   useEffect(() => {
     setLoading(true)
@@ -63,8 +67,8 @@ export default function ShowAuthor() {
   }, [path])
 
   useEffect(() => {
-    if (id) {
-      const loadAuthors = async () => {
+    if (id && role === 'librarian') {
+      const loadAuthor = async () => {
         const author = await fetchAuthorById(id)
         setData(author.author)
 
@@ -73,9 +77,9 @@ export default function ShowAuthor() {
         setDescription(author.author.biography || '')
       }
 
-      loadAuthors()
+      loadAuthor()
     }
-  }, [id])
+  }, [id, role])
 
   console.log('Data', data)
 
@@ -162,7 +166,7 @@ export default function ShowAuthor() {
         <CircularProgress />
       </Box>
     )
-  } else if (data)
+  } else if (data && role === 'librarian')
     return (
       <div className="px-4 py-3 text-xl font-medium ">
         <div className="flex justify-between items-center">
@@ -346,16 +350,16 @@ export default function ShowAuthor() {
                 </p>
                 <div className="flex justify-between">
                   <button
+                    onClick={() => setShowDeleteModal(false)}
+                    className="uppercase w-[124px] bg-white border-1 border-blue text-sm font-medium py-2 px-4 text-blue rounded hover:cursor-pointer"
+                  >
+                    Poništi
+                  </button>
+                  <button
                     onClick={() => handleDeleteAuthor()}
                     className="uppercase w-[124px] text-sm font-medium py-2 px-4 bg-blue text-white rounded hover:bg-blue-500 transition-colors duration-200 hover:cursor-pointer"
                   >
                     Potvrdi
-                  </button>
-                  <button
-                    onClick={() => setShowDeleteModal(false)}
-                    className="uppercase w-[124px] bg-blue text-sm font-medium py-2 px-4 text-white rounded hover:cursor-pointer hover:bg-blue-500 transition-colors duration-200"
-                  >
-                    Poništi
                   </button>
                 </div>
               </div>

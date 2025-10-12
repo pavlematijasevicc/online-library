@@ -11,6 +11,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import { usePathname, useRouter } from 'next/navigation'
 import { deleteUser, viewUser } from '@/utils/apiService'
 import EditLibrarian from '@/components/EditLibrarian'
+import useRole from '@/hooks/useRole'
 
 export default function LibrarianPage() {
   const [value, setValue] = useState('1')
@@ -21,6 +22,7 @@ export default function LibrarianPage() {
   const nameInputRef = useRef<HTMLInputElement>(null)
   const path = usePathname()
   const router = useRouter()
+  const role = useRole()
 
   useEffect(() => {
     if (path) {
@@ -28,16 +30,13 @@ export default function LibrarianPage() {
         let string = path.split('/')
         setUsername(string[2])
       } catch (error) {
-        console.error('Greška prilikom učitavanja knjige:', error)
+        console.error('Greška prilikom učitavanja bibliotekara:', error)
       }
     }
   }, [path])
 
-  console.log('Username:', username)
-  console.log('fetchec data, fetched name:', data, data?.first_name)
-
   useEffect(() => {
-    if (!username) return // Izbjegava poziv ako je username prazan
+    if (!username || role !== 'librarian') return // Izbjegava poziv ako je username prazan
 
     const fetchData = async () => {
       try {
@@ -83,7 +82,7 @@ export default function LibrarianPage() {
     setOpenMenu((prev) => !prev)
   }
 
-  if (data)
+  if (data && role === 'librarian')
     return (
       <div className="py-3 text-xl font-medium overflow-y-hidden">
         <div className="px-4 flex justify-between">
@@ -164,20 +163,20 @@ export default function LibrarianPage() {
               />
               <div className="z-50 bg-white p-6 rounded-xl shadow-lg w-[320px] relative text-center">
                 <p className="text-gray-800 text-base font-medium mb-6">
-                  Da li ste sigurni da želite da izbrišete knjigu?
+                  Da li ste sigurni da želite da izbrišete bibliotekara?
                 </p>
                 <div className="flex justify-between">
+                  <button
+                    onClick={closeDeleteModal}
+                    className="uppercase w-[124px] bg-white border-1 border-blue text-sm font-medium py-2 px-4 text-blue rounded hover:cursor-pointer"
+                  >
+                    Poništi
+                  </button>
                   <button
                     onClick={() => handleDeleteLibrarian(data.id!)}
                     className="uppercase w-[124px] text-sm font-medium py-2 px-4 bg-blue text-white rounded hover:bg-blue-500 transition-colors duration-200 hover:cursor-pointer"
                   >
                     Potvrdi
-                  </button>
-                  <button
-                    onClick={closeDeleteModal}
-                    className="uppercase w-[124px] bg-blue text-sm font-medium py-2 px-4 text-white rounded hover:cursor-pointer hover:bg-blue-500 transition-colors duration-200"
-                  >
-                    Poništi
                   </button>
                 </div>
               </div>

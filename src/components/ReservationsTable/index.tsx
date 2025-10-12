@@ -2,6 +2,8 @@ import { getActiveReservations } from '@/utils/apiService'
 import { Box } from '@mui/material'
 import { useEffect, useState } from 'react'
 import Request from '../Request'
+import InsertInvitationIcon from '@mui/icons-material/InsertInvitation'
+import Link from 'next/link'
 
 export type Reservation = {
   id: number
@@ -43,9 +45,9 @@ export default function ReservationsTable() {
 
   if (reservationsData)
     return (
-      <Box className="w-[900px] mb-8">
+      <Box className="w-[830px]  mb-8 ">
         {/* Aktivnosti */}
-        <Box className="mt-10">
+        <Box className="mt-10 mb-4">
           <h2 className="font-normal text-base">Rezervacije knjiga</h2>
           {reservationsData.length === 0 && (
             <Box>
@@ -64,6 +66,14 @@ export default function ReservationsTable() {
             />
           ))}
         </Box>
+        {reservationsData.length > 0 && (
+          <Link href={'/publication?tab=4'}>
+            <Box className="flex capitalize text-blue text-sm items-center justify-end mr-2">
+              <InsertInvitationIcon className="w-[24px] mr-2" />
+              prikazi sve
+            </Box>
+          </Link>
+        )}
       </Box>
     )
 }

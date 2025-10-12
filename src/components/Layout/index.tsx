@@ -1,7 +1,8 @@
 import Navbar from '@/components/Navbar'
 import SideMenu from '@/components/SideMenu'
+import withAuth from '../withAuth'
 
-export default function Layout({ children }) {
+function Layout({ children }) {
   return (
     <>
       <Navbar />
@@ -18,3 +19,5 @@ export default function Layout({ children }) {
     </>
   )
 }
+
+export default withAuth(Layout)

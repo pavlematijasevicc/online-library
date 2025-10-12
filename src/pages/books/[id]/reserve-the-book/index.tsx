@@ -39,6 +39,7 @@ import {
   getOverdueBooks,
 } from '@/utils/apiService'
 import { Reservation } from '@/components/ActiveReservationsTable'
+import useRole from '@/hooks/useRole'
 
 interface StudentData {
   id: number
@@ -66,18 +67,7 @@ export default function ReserveTheBook() {
   const [reservationsData, setReservationsData] = useState<Reservation[]>([])
   const router = useRouter()
   const path = usePathname()
-  const [user, setUser] = useState<ActiveUser | null>(null)
-
-  useEffect(() => {
-    const userString = localStorage.getItem('user')
-    if (userString) {
-      const parsedUser: ActiveUser = JSON.parse(userString)
-      console.log('User ucitan iz localStorage:', parsedUser)
-      setUser(parsedUser)
-    }
-  }, [])
-
-  console.log('user:', user)
+  const role = useRole()
 
   useEffect(() => {
     setOverdueLength(
@@ -151,6 +141,7 @@ export default function ReserveTheBook() {
       setShowAlert(true)
     } catch (error: any) {
       console.log('Greška prilikom rezervacije knjige', error)
+      setStudentError(true)
     }
   }
 
@@ -161,6 +152,7 @@ export default function ReserveTheBook() {
       setShowAlert(true)
     } catch (error: any) {
       console.log('Greška prilikom rezervacije knjige', error)
+      setStudentError(true)
     }
   }
 
@@ -172,32 +164,30 @@ export default function ReserveTheBook() {
 
   console.log('Data:', data)
 
-  function handleAlert() {
-    setShowAlert(true)
-  }
-
   useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const response = await getAllStudents(50, '', 1)
+    if (role === 'librarian') {
+      const fetchStudents = async () => {
+        try {
+          const response = await getAllStudents(50, '', 1)
 
-        const fetchedStudents = response.data.data || []
+          const fetchedStudents = response.data.data || []
 
-        const mapped: StudentData[] = fetchedStudents.map((student: any) => ({
-          id: student.id,
-          fullName: `${student.first_name || ''} ${
-            student.last_name || ''
-          }`.trim(),
-        }))
+          const mapped: StudentData[] = fetchedStudents.map((student: any) => ({
+            id: student.id,
+            fullName: `${student.first_name || ''} ${
+              student.last_name || ''
+            }`.trim(),
+          }))
 
-        setStudentsData(mapped)
-      } catch (error) {
-        console.log('greska prilikom ucitavanja ucenika!')
+          setStudentsData(mapped)
+        } catch (error) {
+          console.log('greska prilikom ucitavanja ucenika!')
+        }
       }
-    }
 
-    fetchStudents()
-  }, [])
+      fetchStudents()
+    }
+  }, [role])
 
   const handleDeleteBook = async (id: number) => {
     try {
@@ -222,7 +212,7 @@ export default function ReserveTheBook() {
     setOpenMenu((prev) => !prev)
   }
 
-  if (path && overdueBooks && rentalBooks && reservationData && user)
+  if (path && overdueBooks && rentalBooks && reservationData)
     return (
       <div className="py-3 text-xl font-medium overflow-y-hidden">
         <div className="px-4 flex justify-between">
@@ -233,101 +223,109 @@ export default function ReserveTheBook() {
                 <span className="text-blue">Evidencija knjiga</span>
               </Link>
               <span> /</span>
-              <Link href={`/books/${id}`}>
-                <span className="uppercase text-blue"> knjiga-{id}</span>
-              </Link>
+              {role === 'librarian' && (
+                <>
+                  <Link href={`/books/${id}`}>
+                    <span className="uppercase text-blue"> knjiga-{id}</span>
+                  </Link>
 
-              <span> /</span>
+                  <span> /</span>
+                </>
+              )}
+
               <span className="capitalize text-blue"> rezervisi knjigu</span>
             </div>
           </div>
-          <div className="flex items-center justify-center">
-            <div className="flex items-center px-4 mr-4 border-r-1 border-grey-line">
-              <Link
-                href={`${path
-                  .split('/')
-                  .slice(0, -1)
-                  .join('/')}/write-of-the-book`}
-              >
-                <div className="px-2 pl-3 mr-4 text-grey-text text-sm hover:cursor-pointer">
-                  <HistoryEduOutlinedIcon
-                    sx={{ width: '18px', height: '18px' }}
-                  />
-                  <span> Otpisi knjigu </span>
+          {role === 'librarian' && (
+            <div className="flex items-center justify-center">
+              <div className="flex items-center px-4 mr-4 border-r-1 border-grey-line">
+                <Link
+                  href={`${path
+                    .split('/')
+                    .slice(0, -1)
+                    .join('/')}/write-of-the-book`}
+                >
+                  <div className="px-2 pl-3 mr-4 text-grey-text text-sm hover:cursor-pointer">
+                    <HistoryEduOutlinedIcon
+                      sx={{ width: '18px', height: '18px' }}
+                    />
+                    <span> Otpisi knjigu </span>
+                  </div>
+                </Link>
+                <Link
+                  href={`${path.split('/').slice(0, -1).join('/')}/issue-book`}
+                >
+                  <div className="text-grey-text text-sm hover:cursor-pointer">
+                    <WavingHandOutlinedIcon
+                      sx={{ width: '18px', height: '18px' }}
+                    />
+                    <span> Izdaj knjigu </span>
+                  </div>
+                </Link>
+                <Link
+                  href={`${path
+                    .split('/')
+                    .slice(0, -1)
+                    .join('/')}/return-the-book`}
+                >
+                  <div className="px-2 pl-3 mr-4 text-grey-text text-sm hover:cursor-pointer">
+                    <AssignmentReturnOutlinedIcon
+                      sx={{ width: '18px', height: '18px' }}
+                    />
+                    <span> Vrati knjigu </span>
+                  </div>
+                </Link>
+                <div className="px-2 pl-3 mr-4 text-blue text-sm hover:cursor-pointer bg-active py-2 rounded-sm">
+                  <EventAvailableIcon sx={{ width: '18px', height: '18px' }} />
+                  <span> Rezervisi knjigu </span>
                 </div>
-              </Link>
-              <Link
-                href={`${path.split('/').slice(0, -1).join('/')}/issue-book`}
-              >
-                <div className="text-grey-text text-sm hover:cursor-pointer">
-                  <WavingHandOutlinedIcon
-                    sx={{ width: '18px', height: '18px' }}
-                  />
-                  <span> Izdaj knjigu </span>
-                </div>
-              </Link>
-              <Link
-                href={`${path
-                  .split('/')
-                  .slice(0, -1)
-                  .join('/')}/return-the-book`}
-              >
-                <div className="px-2 pl-3 mr-4 text-grey-text text-sm hover:cursor-pointer">
-                  <AssignmentReturnOutlinedIcon
-                    sx={{ width: '18px', height: '18px' }}
-                  />
-                  <span> Vrati knjigu </span>
-                </div>
-              </Link>
-              <div className="px-2 pl-3 mr-4 text-blue text-sm hover:cursor-pointer bg-active py-2 rounded-sm">
-                <EventAvailableIcon sx={{ width: '18px', height: '18px' }} />
-                <span> Rezervisi knjigu </span>
               </div>
-            </div>
-            <div onClick={() => toggleMenu()}>
-              <MoreVertIcon className="text-grey-text hover:cursor-pointer" />
-            </div>
-            {openMenu === true && (
-              <>
-                {/* Overlay */}
-                <div
-                  className="fixed inset-0 bg-transparent"
-                  onClick={() => setOpenMenu(false)}
-                ></div>
-                <div className="absolute w-[320px] -mr-40 mt-40 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-90 text-left">
-                  <Link href={`${path.split('/').slice(0, -1).join('/')}`}>
-                    <div className="capitalize px-4 py-3 hover:cursor-pointer">
-                      <CreateOutlinedIcon
+              <div onClick={() => toggleMenu()}>
+                <MoreVertIcon className="text-grey-text hover:cursor-pointer" />
+              </div>
+              {openMenu === true && (
+                <>
+                  {/* Overlay */}
+                  <div
+                    className="fixed inset-0 bg-transparent"
+                    onClick={() => setOpenMenu(false)}
+                  ></div>
+                  <div className="absolute w-[320px] -mr-40 mt-40 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-90 text-left">
+                    <Link href={`${path.split('/').slice(0, -1).join('/')}`}>
+                      <div className="capitalize px-4 py-3 hover:cursor-pointer">
+                        <CreateOutlinedIcon
+                          sx={{
+                            width: '20px',
+                            height: '20px',
+                          }}
+                          className="mr-1"
+                        />
+                        Izmijeni podatke
+                      </div>
+                    </Link>
+                    <div
+                      className="capitalize px-4 py-3 hover:cursor-pointer"
+                      onClick={() => deleteConfirmation(id!)}
+                    >
+                      <DeleteOutlineIcon
                         sx={{
                           width: '20px',
                           height: '20px',
                         }}
                         className="mr-1"
                       />
-                      Izmijeni podatke
+                      Izbrisi knjigu
                     </div>
-                  </Link>
-                  <div
-                    className="capitalize px-4 py-3 hover:cursor-pointer"
-                    onClick={() => deleteConfirmation(id!)}
-                  >
-                    <DeleteOutlineIcon
-                      sx={{
-                        width: '20px',
-                        height: '20px',
-                      }}
-                      className="mr-1"
-                    />
-                    Izbrisi knjigu
                   </div>
-                </div>
-              </>
-            )}
-          </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
+
         <Box className="flex">
           <Box className="pl-4 pt-8" sx={{ display: 'flex' }}>
-            {user.role === 'librarian' ? (
+            {role === 'librarian' ? (
               <Box
                 component="form"
                 sx={{
@@ -415,58 +413,59 @@ export default function ReserveTheBook() {
               </Box>
             )}
           </Box>
-
-          <Box className="ml-16 text-base w-[350px] border-grey-line border-1 p-4 mt-8">
-            <h3 className="font-medium text-base mb-8">Kolicine</h3>
-            <Box className="flex items-center justify-between text-grey-text mb-4">
-              Na raspolaganju:
-              <Button
-                variant="outlined"
-                className="text-sm font-normal px-3 py-2 border-green-500 text-green-500"
-              >
-                {data?.number_of_copies_available} primjeraka
-              </Button>
+          {role === 'librarian' && (
+            <Box className="ml-16 text-base w-[350px] border-grey-line border-1 p-4 mt-8">
+              <h3 className="font-medium text-base mb-8">Kolicine</h3>
+              <Box className="flex items-center justify-between text-grey-text mb-4">
+                Na raspolaganju:
+                <Button
+                  variant="outlined"
+                  className="text-sm font-normal px-3 py-2 border-green-500 text-green-500"
+                >
+                  {data?.number_of_copies_available} primjeraka
+                </Button>
+              </Box>
+              <Box className="flex items-center justify-between text-grey-text mb-4">
+                Rezervisano:
+                <Button
+                  variant="outlined"
+                  className="text-sm font-normal px-3 py-2 text-orange-400 border-orange-400"
+                >
+                  {reservationsData.length} primjerak(a)
+                </Button>
+              </Box>
+              <Box className="flex items-center justify-between text-grey-text mb-4">
+                Izdato:
+                <Button
+                  variant="outlined"
+                  className="text-sm font-normal px-3 py-2 border-blue text-blue"
+                >
+                  {rentalBooks.length} primjerak(a)
+                </Button>
+              </Box>
+              <Box className="flex items-center justify-between text-grey-text mb-4">
+                U prekoracenju:
+                <Button
+                  variant="outlined"
+                  className="text-sm font-normal px-3 py-2 border-red-500 text-red-500"
+                >
+                  {overdueLength} primjerak(a)
+                </Button>
+              </Box>
+              <Box className="flex items-center justify-between text-grey-text">
+                Ukupna kolicina:
+                <Button
+                  variant="outlined"
+                  className="text-sm font-normal px-3 py-2 border-gray-500 text-gray-500"
+                >
+                  {Number(data?.number_of_copies_available) +
+                    Number(rentalBooks.length) +
+                    Number(reservationsData.length)}
+                  primjerak(a)
+                </Button>
+              </Box>
             </Box>
-            <Box className="flex items-center justify-between text-grey-text mb-4">
-              Rezervisano:
-              <Button
-                variant="outlined"
-                className="text-sm font-normal px-3 py-2 text-orange-400 border-orange-400"
-              >
-                {reservationsData.length} primjerak(a)
-              </Button>
-            </Box>
-            <Box className="flex items-center justify-between text-grey-text mb-4">
-              Izdato:
-              <Button
-                variant="outlined"
-                className="text-sm font-normal px-3 py-2 border-blue text-blue"
-              >
-                {rentalBooks.length} primjerak(a)
-              </Button>
-            </Box>
-            <Box className="flex items-center justify-between text-grey-text mb-4">
-              U prekoracenju:
-              <Button
-                variant="outlined"
-                className="text-sm font-normal px-3 py-2 border-red-500 text-red-500"
-              >
-                {overdueLength} primjerak(a)
-              </Button>
-            </Box>
-            <Box className="flex items-center justify-between text-grey-text">
-              Ukupna kolicina:
-              <Button
-                variant="outlined"
-                className="text-sm font-normal px-3 py-2 border-gray-500 text-gray-500"
-              >
-                {Number(data?.number_of_copies_available) +
-                  Number(rentalBooks.length) +
-                  Number(reservationsData.length)}
-                primjerak(a)
-              </Button>
-            </Box>
-          </Box>
+          )}
         </Box>
 
         {showDeleteModal && (
@@ -503,9 +502,21 @@ export default function ReserveTheBook() {
             onClose={() => setShowAlert(false)}
             variant="filled"
           >
-            {user.role === 'librarian'
+            {role === 'librarian'
               ? 'Knjiga uspjesno rezervisana!'
               : 'Poslat zahtjev za rezervacijom!'}
+          </Alert>
+        )}
+        {studentError && (
+          <Alert
+            className="mt-12 w-[600px] mx-4"
+            severity="error"
+            onClose={() => setStudentError(false)}
+            variant="filled"
+          >
+            {role === 'student'
+              ? 'Vec ste poslali zahtjev za rezervaciju ove knjige!'
+              : 'Ovom uceniku je vec rezervisana ova knjiga!'}
           </Alert>
         )}
       </div>

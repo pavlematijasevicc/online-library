@@ -13,6 +13,7 @@ import { BookData } from '../../../../../types'
 import { deleteBook, discardTheBook, fetchBookById } from '@/utils/apiService'
 import PublishedBooksTable from '@/components/PublishedBooksTable'
 import { Alert, Box, Button } from '@mui/material'
+import useRole from '@/hooks/useRole'
 
 export default function WriteOfTheBook() {
   const [openMenu, setOpenMenu] = useState(false)
@@ -23,6 +24,7 @@ export default function WriteOfTheBook() {
   const [showAlert, setShowAlert] = useState(false)
   const path = usePathname()
   const router = useRouter()
+  const role = useRole()
 
   useEffect(() => {
     if (path) {
@@ -46,7 +48,7 @@ export default function WriteOfTheBook() {
         }
       }
 
-      loadBook()
+   loadBook()
     }
   }, [id])
 
@@ -92,7 +94,7 @@ export default function WriteOfTheBook() {
     }
   }
 
-  if (path && id)
+  if (path && id && role === 'librarian')
     return (
       <div className="py-3 text-xl font-medium overflow-y-hidden">
         <div className="px-4 flex justify-between mb-10">

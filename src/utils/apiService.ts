@@ -1,3 +1,4 @@
+
 import { ApiResponse, BookData, Category, FetchAuthorResponse, FetchBookResponse, Genre, logInData, NewAuthorData, Period, Publisher, PublisherCreate, Rental, Student } from "../../types";
 import api from "./axios";
 
@@ -16,6 +17,7 @@ async function login(data: logInData) {
     try {
         const res = await api.post('/login', data)
         // Sacuvaj token u localStorage
+        console.log('res:',res)
         if(res.data.access_token){
          localStorage.setItem('access_token',res.data.access_token);
         }
@@ -613,6 +615,16 @@ export async function rejectReservation(reservation_id:number){
   }
 }
 
+export async function cancelRes(reservation_id:number){
+  try{
+    const response=await api.post(`/reservations/${reservation_id}/cancel`);
+    console.log(response)
+  }catch(error){
+    console.log('Greska prilikom otkazivanja rezervacije',error)
+    throw error;
+  }
+}
+
 type RentFromReservation={
   reservation_id:number,
   book_id:number
@@ -629,8 +641,85 @@ export const createRentalFromReservation = async (data: RentFromReservation) => 
   return response.data
 }
 
+export const viewTransaction=async (id: number)=>{
+  const response=await api.get(`/rentals/${id}`,{
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+
+  return response.data
+}
+
+type resetPasswordProps={
+  password:string,
+  password_confirmation:string
+    token: string
+  email: string
+}
+
+export const resetPassword = async (data: resetPasswordProps) => {
+  const { token, email, password, password_confirmation } = data
+
+  const response = await api.post(
+    `/reset-password?token=${token}&email=${encodeURIComponent(email)}`,
+    {
+      password,
+      password_confirmation,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+
+  return response.data
+}
 
 
+
+type changePasswordProps={
+  current_password:string,
+  new_password:string,
+  new_password_confirmation:string
+   
+}
+
+
+export const changePassword = async (data: changePasswordProps) => {
+  const { current_password, new_password, new_password_confirmation } = data
+
+  const response = await api.post('/users/change-password',
+    {
+      current_password,
+      new_password,
+      new_password_confirmation,
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+
+  return response.data
+}
+
+export const forgotPassword = async (email: string) => {
+
+  const response = await api.post(
+    'forgot-password',
+   {email},
+    {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    }
+  )
+
+  return response.data
+}
 
   export {
     login,

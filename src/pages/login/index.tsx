@@ -2,12 +2,13 @@
 import { get, login } from '@/utils/apiService'
 import { Button, TextField } from '@mui/material'
 import Image from 'next/image'
-import loginImage from '../../public/login.jpg'
+import loginImage from '../../../public/login.jpg'
 import { useState } from 'react'
-import { checkEmail, checkPassword } from '../utils/utiles'
+import { checkEmail, checkPassword } from '../../utils/utiles'
 import { useRouter } from 'next/router'
 import AuthLayout from '@/components/AuthLayout'
-import type { NextPageWithLayout } from './_app'
+import type { NextPageWithLayout } from './../_app'
+import Link from 'next/link'
 
 const Login: NextPageWithLayout = () => {
   const year: number = new Date().getFullYear()
@@ -108,9 +109,15 @@ const Login: NextPageWithLayout = () => {
             log in
           </Button>
         </form>
-        <Button variant="text" className="text-blue p-2 capitalize mb-4 block">
-          Forgot password?
-        </Button>
+        <Link href={'/login/forgot-password'}>
+          <Button
+            variant="text"
+            className="text-blue p-2 capitalize mb-4 block"
+          >
+            Forgot password?
+          </Button>
+        </Link>
+
         <div className=" text-grey-text text-xs text-center">
           {`©${year} ICT Cortex. All rights reserved.`}
         </div>

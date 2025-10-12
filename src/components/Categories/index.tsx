@@ -317,6 +317,12 @@ export default function CategoryTable() {
             </p>
             <div className="flex justify-between">
               <button
+                onClick={closeDeleteModal}
+                className="uppercase w-[124px] bg-white border-1 border-blue text-sm font-medium py-2 px-4 text-blue rounded hover:cursor-pointer"
+              >
+                Poništi
+              </button>
+              <button
                 onClick={() => {
                   if (categoryToDelete !== null)
                     handleDeleteCategory(categoryToDelete)
@@ -324,12 +330,6 @@ export default function CategoryTable() {
                 className="uppercase w-[124px] text-sm font-medium py-2 px-4 bg-blue text-white rounded hover:bg-blue-500 transition-colors duration-200 hover:cursor-pointer"
               >
                 Potvrdi
-              </button>
-              <button
-                onClick={closeDeleteModal}
-                className="uppercase w-[124px] bg-blue text-sm font-medium py-2 px-4 text-white rounded hover:cursor-pointer  hover:bg-blue-500 transition-colors duration-200"
-              >
-                Poništi
               </button>
             </div>
           </div>

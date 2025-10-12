@@ -223,6 +223,14 @@ export default function ArchivedReservationsTable({
                           Izdato
                         </Button>
                       )}
+                      {row.status === 'cancelled' && (
+                        <Button
+                          variant="outlined"
+                          className="text-sm font-normal px-3 py-2 border-orange-500 text-orange-500 rounded-3xl"
+                        >
+                          Otkazano
+                        </Button>
+                      )}
                     </TableCell>
                     <TableCell align="right">
                       <Box

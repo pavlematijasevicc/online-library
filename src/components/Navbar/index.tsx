@@ -10,18 +10,22 @@ import PersonIcon from '@mui/icons-material/Person'
 import MenuBookIcon from '@mui/icons-material/MenuBook'
 import ClassOutlinedIcon from '@mui/icons-material/ClassOutlined'
 import { Avatar } from '@mui/material'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import withAuth from '../withAuth'
 import LogoutIcon from '@mui/icons-material/Logout'
 import Link from 'next/link'
+import { ActiveUser } from '../../../types'
+import useRole from '@/hooks/useRole'
 
 function Navbar() {
   const [openMenu, setOpenMenu] = useState<boolean>(false)
   const [userMenu, setUserMenu] = useState<boolean>(false)
+  const role = useRole()
 
-  function handleLogin() {
+  function handleLogout() {
     localStorage.removeItem('access_token')
   }
+
   return (
     <Box
       sx={{
@@ -63,13 +67,19 @@ function Navbar() {
         <Link href={'/activity'}>
           <NotificationsNoneIcon className="mx-2 hover:cursor-pointer text-white" />
         </Link>
-        <Box sx={{ width: '1px', height: '26px', bgcolor: 'white' }}></Box>
-        <AddIcon
-          className="mx-2 hover:cursor-pointer text-white"
-          onClick={() => {
-            setOpenMenu((pre) => !pre)
-          }}
-        />
+        {role === 'librarian' && (
+          <>
+            <Box sx={{ width: '1px', height: '26px', bgcolor: 'white' }}></Box>
+
+            <AddIcon
+              className="mx-2 hover:cursor-pointer text-white"
+              onClick={() => {
+                setOpenMenu((pre) => !pre)
+              }}
+            />
+          </>
+        )}
+
         <h2 className="text-white font-bold text-2xl mx-2 mr-4">bildstudio</h2>
         <Image
           alt="avatar"
@@ -81,46 +91,71 @@ function Navbar() {
         />
       </Box>
       {openMenu && (
-        <Box className="py-2 text-grey-text font-normal bg-white text-sm w-[317px] absolute mt-12 z-999999 ml-320 rounded-sm shadow-[0_0_4px_0_rgba(0,0,0,0.25)]">
-          <Box className="px-4 py-3">
-            <Link href={'/librarians/new-librarian'}>
-              <PersonIcon className="mr-2 w-[24px] h-[24px]" /> Bibliotekar
-            </Link>
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-transparent z-[99998]"
+            onClick={() => setOpenMenu(false)}
+          ></div>
+
+          {/* Menu */}
+          <Box
+            className="py-2 text-grey-text font-normal bg-white text-sm w-[317px] absolute mt-12 z-[99999] ml-320 rounded-sm shadow-[0_0_4px_0_rgba(0,0,0,0.25)]"
+            onClick={(e) => e.stopPropagation()} // sprečava zatvaranje kad klikneš u meni
+          >
+            <Box className="px-4 py-3">
+              <Link href={'/librarians/new-librarian'}>
+                <PersonIcon className="mr-2 w-[24px] h-[24px]" /> Bibliotekar
+              </Link>
+            </Box>
+            <Box className="px-4 py-3">
+              <Link href={'/students/new-student'}>
+                <GroupsIcon className="mr-2 w-[24px] h-[24px]" /> Ucenik
+              </Link>
+            </Box>
+            <Box className="px-4 py-3">
+              <Link href={'/books/new-book'}>
+                <MenuBookIcon className="mr-2 w-[24px] h-[24px]" /> Knjiga
+              </Link>
+            </Box>
+            <Box className="px-4 py-3">
+              <Link href={'/authors/new-author'}>
+                <ClassOutlinedIcon className="mr-2 w-[24px] h-[24px]" /> Autor
+              </Link>
+            </Box>
           </Box>
-          <Box className="px-4 py-3">
-            <Link href={'/students/new-student'}>
-              <GroupsIcon className="mr-2 w-[24px] h-[24px]" /> Ucenik
-            </Link>
-          </Box>
-          <Box className="px-4 py-3">
-            <Link href={'/books/new-book'}>
-              <MenuBookIcon className="mr-2 w-[24px] h-[24px]" /> Knjiga
-            </Link>
-          </Box>
-          <Box className="px-4 py-3">
-            <Link href={'/authors/new-author'}>
-              <ClassOutlinedIcon className="mr-2 w-[24px] h-[24px]" /> Autor
-            </Link>
-          </Box>
-        </Box>
+        </>
       )}
+
       {userMenu && (
-        <Box className="py-2 text-grey-text font-normal bg-white text-sm w-[220px] absolute mt-16 z-999999 ml-380 rounded-sm shadow-[0_0_4px_0_rgba(0,0,0,0.25)]">
-          <Box className="px-4 py-3" onClick={() => handleLogin()}>
-            <Link href={'/login'}>
-              <LogoutIcon className="mr-2 w-[24px] h-[24px]" /> Logout
-            </Link>
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-transparent z-[99998]"
+            onClick={() => setUserMenu(false)}
+          ></div>
+
+          {/* Menu */}
+          <Box
+            className="py-2 text-grey-text font-normal bg-white text-sm w-[220px] absolute mt-16 z-[99999] ml-400 rounded-sm shadow-[0_0_4px_0_rgba(0,0,0,0.25)]"
+            onClick={(e) => e.stopPropagation()} // sprečava zatvaranje kad klikneš unutar menija
+          >
+            <Box className="px-4 py-3">
+              <Link href={'/profile'}>
+                <GroupsIcon className="mr-2 w-[24px] h-[24px]" /> Profil
+              </Link>
+            </Box>
+            <Box className="px-4 py-3" onClick={() => handleLogout()}>
+              <Link href={'/login'}>
+                <LogoutIcon className="mr-2 w-[24px] h-[24px]" /> Logout
+              </Link>
+            </Box>
           </Box>
-          <Box className="px-4 py-3">
-            <Link href={'/profile'}>
-              <GroupsIcon className="mr-2 w-[24px] h-[24px]" /> Profil
-            </Link>
-          </Box>
-        </Box>
+        </>
       )}
     </Box>
   )
 }
 
-export default withAuth(Navbar)
+export default Navbar
 /*<Avatar alt="Remy Sharp" src="../../../public/Avatar.png" />* nije radilo u kodu kad se ubacilo (prikazivalo slovo R umjesto slike), zato sam koristio Image */

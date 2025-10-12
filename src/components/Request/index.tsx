@@ -37,7 +37,7 @@ export default function Request({
   }
 
   return (
-    <Box className="flex border-grey-line border-b-1 text-sm  items-center w-[838px] py-2 px-4">
+    <Box className="flex border-grey-line border-b-1 text-sm  items-center w-[830px] py-2 px-4">
       <Box className="flex items-center w-[230px] mr-4">
         <Image
           alt="avatar"

@@ -35,6 +35,7 @@ import {
 import { deleteBook, fetchBookById, getAllStudents } from '@/utils/apiService'
 import { useRouter } from 'next/router'
 import { Reservation } from '@/components/ActiveReservationsTable'
+import useRole from '@/hooks/useRole'
 
 interface StudentData {
   id: number
@@ -61,6 +62,7 @@ export default function IssuedBook() {
   const [reservationsData, setReservationsData] = useState<Reservation[]>([])
   const router = useRouter()
   const path = usePathname()
+  const role = useRole()
 
   useEffect(() => {
     if (path) {
@@ -74,7 +76,7 @@ export default function IssuedBook() {
   }, [path])
 
   useEffect(() => {
-    if (id) {
+    if (id && role === 'librarian') {
       const loadBook = async () => {
         const book = await fetchBookById(id)
         setData(book.book)
@@ -108,7 +110,7 @@ export default function IssuedBook() {
       loadOverdue()
       loadBook()
     }
-  }, [id])
+  }, [id, role])
 
   console.log('Data:', data)
 
@@ -123,27 +125,29 @@ export default function IssuedBook() {
   }, [overdueBooks])
 
   useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        const response = await getAllStudents(50, '', 1)
+    if (role === 'librarian') {
+      const fetchStudents = async () => {
+        try {
+          const response = await getAllStudents(50, '', 1)
 
-        const fetchedStudents = response.data.data || []
+          const fetchedStudents = response.data.data || []
 
-        const mapped: StudentData[] = fetchedStudents.map((student: any) => ({
-          id: student.id,
-          fullName: `${student.first_name || ''} ${
-            student.last_name || ''
-          }`.trim(),
-        }))
+          const mapped: StudentData[] = fetchedStudents.map((student: any) => ({
+            id: student.id,
+            fullName: `${student.first_name || ''} ${
+              student.last_name || ''
+            }`.trim(),
+          }))
 
-        setStudentsData(mapped)
-      } catch (error) {
-        console.log('greska prilikom ucitavanja ucenika!')
+          setStudentsData(mapped)
+        } catch (error) {
+          console.log('greska prilikom ucitavanja ucenika!')
+        }
       }
-    }
 
-    fetchStudents()
-  }, [])
+      fetchStudents()
+    }
+  }, [role])
 
   function handleAlert() {
     console.log('usao u alert')
@@ -203,7 +207,14 @@ export default function IssuedBook() {
     }
   }
 
-  if (path && studentsData && overdueBooks && rentalBooks && reservationsData)
+  if (
+    path &&
+    studentsData &&
+    overdueBooks &&
+    rentalBooks &&
+    reservationsData &&
+    role === 'librarian'
+  )
     return (
       <div className="py-3 text-xl font-medium overflow-y-hidden">
         <div className="px-4 flex justify-between">

@@ -69,6 +69,7 @@ interface EnhancedTableProps {
   order: Order
   orderBy: string
   rowCount: number
+  role: string
 }
 
 function EnhancedTableHead(props: EnhancedTableProps) {
@@ -79,6 +80,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
     numSelected,
     rowCount,
     onRequestSort,
+    role,
   } = props
   const createSortHandler =
     (property: keyof Data) => (event: React.MouseEvent<unknown>) => {
@@ -88,21 +90,26 @@ function EnhancedTableHead(props: EnhancedTableProps) {
   return (
     <TableHead sx={{ backgroundColor: '#F5F7FA' }}>
       <TableRow>
-        <TableCell padding="checkbox">
-          <Checkbox
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllClick}
-          />
-        </TableCell>
+        {role === 'librarian' && (
+          <TableCell padding="checkbox">
+            <Checkbox
+              indeterminate={numSelected > 0 && numSelected < rowCount}
+              checked={rowCount > 0 && numSelected === rowCount}
+              onChange={onSelectAllClick}
+            />
+          </TableCell>
+        )}
+
         {headCells.map((headCell) => (
           <TableCell
+            className={role === 'librarian' ? '' : 'pl-4'}
             key={headCell.id}
             align={headCell.numeric ? 'right' : 'left'}
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
             sx={{
               fontWeight: headCell.id === 'description' ? 'normal' : 'bold',
+              height: '60px',
             }}
           >
             <TableSortLabel
@@ -119,9 +126,9 @@ function EnhancedTableHead(props: EnhancedTableProps) {
             </TableSortLabel>
           </TableCell>
         ))}
-        <TableCell align="right" padding="normal">
-          {/* prazno zaglavlje za dugme */}
-        </TableCell>
+        {role === 'librarian' && (
+          <TableCell align="right" padding="normal"></TableCell>
+        )}
       </TableRow>
     </TableHead>
   )
@@ -165,7 +172,12 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
     </Toolbar>
   ) : null
 }
-export default function EnhancedTable() {
+
+type TableProps = {
+  role: string
+}
+
+export default function EnhancedTable({ role }: TableProps) {
   const [order, setOrder] = React.useState<Order>('asc')
   const [orderBy, setOrderBy] = React.useState<keyof Data>('description')
   const [selected, setSelected] = React.useState<readonly number[]>([])
@@ -336,7 +348,7 @@ export default function EnhancedTable() {
   } else
     return (
       <Box sx={{ width: '100%' }}>
-        <Box className="absolute -mt-14 ml-390 flex items-center justify-center">
+        <Box className="absolute -mt-14 ml-410 flex items-center justify-center">
           <TextField
             inputRef={inputRef}
             className="text-sm font-normal pt-1 height-[30px] pr-0 m-0 w-[140px]"
@@ -360,10 +372,13 @@ export default function EnhancedTable() {
           />
         </Box>
         <Paper sx={{ width: '100%', mb: 2 }}>
-          <EnhancedTableToolbar numSelected={selected.length} />
+          {role === 'librarian' && (
+            <EnhancedTableToolbar numSelected={selected.length} />
+          )}
           <TableContainer>
             <Table sx={{ minWidth: 750 }} size="medium">
               <EnhancedTableHead
+                role={role}
                 numSelected={selected.length}
                 order={order}
                 orderBy={orderBy}
@@ -377,20 +392,29 @@ export default function EnhancedTable() {
 
                   return (
                     <TableRow
+                      className="h-[60px]"
                       tabIndex={-1}
                       key={row.id}
                       selected={isItemSelected}
                     >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          onChange={(event) => handleClick(event, row.id)}
-                          color="primary"
-                          checked={isItemSelected}
-                        />
-                      </TableCell>
+                      {role === 'librarian' && (
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            onChange={(event) => handleClick(event, row.id)}
+                            color="primary"
+                            checked={isItemSelected}
+                          />
+                        </TableCell>
+                      )}
+
                       <TableCell component="th" scope="row" padding="none">
                         <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            marginLeft: '8px',
+                          }}
                         >
                           <Avatar {...stringAvatar(`${row.name}`)} />
                           <Typography variant="body1">{row.name}</Typography>
@@ -399,53 +423,54 @@ export default function EnhancedTable() {
                       <TableCell align="left" padding="none">
                         {row.description}
                       </TableCell>
-
-                      <TableCell align="right">
-                        <div
-                          onClick={
-                            openMenu === index
-                              ? () => closeMenu()
-                              : () => toggleMenu(index)
-                          }
-                        >
-                          <MoreVertIcon className="hover:cursor-pointer" />
-                        </div>
-                        {openMenu === index && (
-                          <>
-                            <div
-                              className="fixed inset-0 bg-transparent"
-                              onClick={() => setOpenMenu(null)}
-                            ></div>
-                            <div className="absolute w-[320px] -ml-42 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
-                              <Link href={`/authors/${row.id}`}>
-                                <div className="capitalize px-4 py-3 flex items-center">
-                                  <CreateOutlinedIcon
+                      {role === 'librarian' && (
+                        <TableCell align="right">
+                          <div
+                            onClick={
+                              openMenu === index
+                                ? () => closeMenu()
+                                : () => toggleMenu(index)
+                            }
+                          >
+                            <MoreVertIcon className="hover:cursor-pointer" />
+                          </div>
+                          {openMenu === index && (
+                            <>
+                              <div
+                                className="fixed inset-0 bg-transparent"
+                                onClick={() => setOpenMenu(null)}
+                              ></div>
+                              <div className="absolute w-[320px] -ml-42 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
+                                <Link href={`/authors/${row.id}`}>
+                                  <div className="capitalize px-4 py-3 flex items-center">
+                                    <CreateOutlinedIcon
+                                      sx={{
+                                        width: '20px',
+                                        height: '20px',
+                                      }}
+                                      className="mr-1"
+                                    />
+                                    Izmjeni autora
+                                  </div>
+                                </Link>
+                                <div
+                                  className="capitalize px-4 py-3 flex items-center hover:cursor-pointer"
+                                  onClick={() => deleteConfirmation(row.id)}
+                                >
+                                  <DeleteOutlineIcon
                                     sx={{
                                       width: '20px',
                                       height: '20px',
                                     }}
                                     className="mr-1"
                                   />
-                                  Izmjeni autora
+                                  Izbrisi autora
                                 </div>
-                              </Link>
-                              <div
-                                className="capitalize px-4 py-3 flex items-center hover:cursor-pointer"
-                                onClick={() => deleteConfirmation(row.id)}
-                              >
-                                <DeleteOutlineIcon
-                                  sx={{
-                                    width: '20px',
-                                    height: '20px',
-                                  }}
-                                  className="mr-1"
-                                />
-                                Izbrisi autora
                               </div>
-                            </div>
-                          </>
-                        )}
-                      </TableCell>
+                            </>
+                          )}
+                        </TableCell>
+                      )}
                     </TableRow>
                   )
                 })}

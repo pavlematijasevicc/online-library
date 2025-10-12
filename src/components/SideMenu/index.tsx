@@ -20,6 +20,8 @@ import {
   ListItemText,
   Toolbar,
 } from '@mui/material'
+import { ActiveUser } from '../../../types'
+import useRole from '@/hooks/useRole'
 
 export default function SideMenu() {
   const [activeItem, setActiveItem] = useState('')
@@ -29,21 +31,22 @@ export default function SideMenu() {
     setActiveItem(path)
   }, [path])
 
-  console.log(activeItem)
+  const role = useRole()
 
   return (
     <>
       <Drawer
         sx={{
           width: drawerOpen ? 273 : 56,
+
           flexShrink: 0,
           '& .MuiDrawer-paper': {
             marginTop: '72px',
             borderRadius: '0',
             overflow: 'hidden',
             width: drawerOpen ? 273 : 56,
-            minHeight: 'screen',
-            justifyContent: 'space-between',
+            height: '92.5vh',
+            justifyContent: 'start',
             boxSizing: 'border-box',
             transition: 'width 0.3s',
             display: 'flex',
@@ -99,56 +102,61 @@ export default function SideMenu() {
               </ListItem>
             )}
           </Link>
-          <Link href={'/librarians'}>
-            {activeItem !== null && activeItem.includes('/librarians') ? (
-              <ListItem
-                key={'librarians'}
-                disablePadding
-                className=" bg-active text-blue "
-              >
-                <ListItemButton>
-                  <ListItemIcon>
-                    <PersonIcon className="text-blue" />
-                  </ListItemIcon>
-                  <ListItemText primary={'Bibliotekari'} />
-                </ListItemButton>
-              </ListItem>
-            ) : (
-              <ListItem key={'librarians'} disablePadding>
-                <ListItemButton>
-                  <ListItemIcon>
-                    <PersonIcon className="text-grey-text" />
-                  </ListItemIcon>
-                  <ListItemText primary={'Bibliotekari'} />
-                </ListItemButton>
-              </ListItem>
-            )}
-          </Link>
-          <Link href={'/students'}>
-            {activeItem !== null && activeItem.includes('/students') ? (
-              <ListItem
-                key={'students'}
-                disablePadding
-                className=" bg-active text-blue"
-              >
-                <ListItemButton>
-                  <ListItemIcon>
-                    <GroupsIcon className="text-blue" />
-                  </ListItemIcon>
-                  <ListItemText primary={'Ucenici'} />
-                </ListItemButton>
-              </ListItem>
-            ) : (
-              <ListItem key={'students'} disablePadding>
-                <ListItemButton>
-                  <ListItemIcon>
-                    <GroupsIcon className="text-grey-text" />
-                  </ListItemIcon>
-                  <ListItemText primary={'Ucenici'} />
-                </ListItemButton>
-              </ListItem>
-            )}
-          </Link>
+          {role === 'librarian' && (
+            <>
+              <Link href={'/librarians'}>
+                {activeItem !== null && activeItem.includes('/librarians') ? (
+                  <ListItem
+                    key={'librarians'}
+                    disablePadding
+                    className=" bg-active text-blue "
+                  >
+                    <ListItemButton>
+                      <ListItemIcon>
+                        <PersonIcon className="text-blue" />
+                      </ListItemIcon>
+                      <ListItemText primary={'Bibliotekari'} />
+                    </ListItemButton>
+                  </ListItem>
+                ) : (
+                  <ListItem key={'librarians'} disablePadding>
+                    <ListItemButton>
+                      <ListItemIcon>
+                        <PersonIcon className="text-grey-text" />
+                      </ListItemIcon>
+                      <ListItemText primary={'Bibliotekari'} />
+                    </ListItemButton>
+                  </ListItem>
+                )}
+              </Link>
+              <Link href={'/students'}>
+                {activeItem !== null && activeItem.includes('/students') ? (
+                  <ListItem
+                    key={'students'}
+                    disablePadding
+                    className=" bg-active text-blue"
+                  >
+                    <ListItemButton>
+                      <ListItemIcon>
+                        <GroupsIcon className="text-blue" />
+                      </ListItemIcon>
+                      <ListItemText primary={'Ucenici'} />
+                    </ListItemButton>
+                  </ListItem>
+                ) : (
+                  <ListItem key={'students'} disablePadding>
+                    <ListItemButton>
+                      <ListItemIcon>
+                        <GroupsIcon className="text-grey-text" />
+                      </ListItemIcon>
+                      <ListItemText primary={'Ucenici'} />
+                    </ListItemButton>
+                  </ListItem>
+                )}
+              </Link>{' '}
+            </>
+          )}
+
           <Link href={'/books'}>
             {activeItem !== null && activeItem.includes('/books') ? (
               <ListItem
@@ -225,32 +233,37 @@ export default function SideMenu() {
               </ListItem>
             )}
           </Link>
-          <Divider />
-          <Link href={'/settings'}>
-            {activeItem !== null && activeItem.includes('/settings') ? (
-              <ListItem
-                key={'settings'}
-                disablePadding
-                className=" text-blue bg-active"
-              >
-                <ListItemButton>
-                  <ListItemIcon>
-                    <SettingsIcon className="text-blue" />
-                  </ListItemIcon>
-                  <ListItemText primary={'Settings'} />
-                </ListItemButton>
-              </ListItem>
-            ) : (
-              <ListItem key={'settings'} disablePadding>
-                <ListItemButton>
-                  <ListItemIcon>
-                    <SettingsIcon className="text-grey-text" />
-                  </ListItemIcon>
-                  <ListItemText primary={'Settings'} />
-                </ListItemButton>
-              </ListItem>
-            )}
-          </Link>
+
+          {role === 'librarian' && (
+            <>
+              <Divider />
+              <Link href={'/settings'}>
+                {activeItem !== null && activeItem.includes('/settings') ? (
+                  <ListItem
+                    key={'settings'}
+                    disablePadding
+                    className=" text-blue bg-active"
+                  >
+                    <ListItemButton>
+                      <ListItemIcon>
+                        <SettingsIcon className="text-blue" />
+                      </ListItemIcon>
+                      <ListItemText primary={'Settings'} />
+                    </ListItemButton>
+                  </ListItem>
+                ) : (
+                  <ListItem key={'settings'} disablePadding>
+                    <ListItemButton>
+                      <ListItemIcon>
+                        <SettingsIcon className="text-grey-text" />
+                      </ListItemIcon>
+                      <ListItemText primary={'Settings'} />
+                    </ListItemButton>
+                  </ListItem>
+                )}
+              </Link>
+            </>
+          )}
         </List>
       </Drawer>
     </>

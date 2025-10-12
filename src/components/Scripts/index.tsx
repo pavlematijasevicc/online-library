@@ -51,7 +51,7 @@ export default function Scripts() {
         const cleanedOptions = options.scripts.map(
           (b: { value: string; label: string }, index: number) => ({
             id: index,
-            name: b.label, // ili b.value, zavisi šta hoćeš da prikažeš
+            name: b.label, 
           })
         )
         setScripts(cleanedOptions)

@@ -354,7 +354,7 @@ export default function PublicationOverdueBooks() {
                                 ></Box>
 
                                 <Box className="absolute w-[200px] -ml-50 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
-                                  <Link href={`/publication`}>
+                                  <Link href={`/publication/${row.id}`}>
                                     <Box className="capitalize px-4 py-3 flex items-center">
                                       <DescriptionOutlinedIcon
                                         sx={{

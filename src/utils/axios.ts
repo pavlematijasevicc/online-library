@@ -11,27 +11,28 @@ async function logout(){
   localStorage.removeItem('access_token');
 }
 
-//Interceptor
-
+// Request interceptor → dodaj token
 api.interceptors.request.use(
-  (config)=>{
-    //uzmi token iz localStorage-a
-    const token=localStorage.getItem('access_token');
-      //Ako token postoji, dodaj ga u Authorization header
-    if(token){
-      config.headers.Authorization=`Bearer ${token}`;
+  (config) => {
+    const token = localStorage.getItem('access_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
     }
-    
-
-    return config;
+    return config
   },
-  async (error)=>{
-    if(error.response?.status===401){
-      await logout();
-    }
-    return Promise.reject(error);
-  }
-  
+  (error) => Promise.reject(error)
 )
 
+// Response interceptor → presretni 401 i progutaj ga
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      await logout()
+      // vrati "prazan" rezultat umesto greške
+      return new Promise(() => {}) // beskonačni pending → ne baca dalje error
+    }
+    return Promise.reject(error)
+  }
+)
 export default api;

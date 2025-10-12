@@ -51,7 +51,7 @@ export default function Format() {
         const cleanedOptions = options.dimensions.map(
           (b: { value: string; label: string }, index: number) => ({
             id: index,
-            name: b.label, // ili b.value, zavisi šta hoćeš da prikažeš
+            name: b.value, // ili b.value, zavisi šta hoćeš da prikažeš
           })
         )
         setFormats(cleanedOptions)

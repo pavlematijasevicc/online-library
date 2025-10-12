@@ -17,8 +17,9 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 import RestartAltIcon from '@mui/icons-material/RestartAlt'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import { RollerShades, Visibility, VisibilityOff } from '@mui/icons-material'
-import { deleteUser } from '@/utils/apiService'
+import { changePassword, deleteUser, resetPassword } from '@/utils/apiService'
 import { useRouter } from 'next/router'
+import CloseIcon from '@mui/icons-material/Close'
 import { checkPassword } from '@/utils/utiles'
 
 export default function Profile() {
@@ -29,13 +30,19 @@ export default function Profile() {
   const [submitted, setSubmitted] = useState<boolean>(false)
   const [password, setPassword] = useState<string>('')
   const [password_repeat, setPasswordRepeat] = useState<string>('')
+  const [oldPassword, setOldPassword] = useState<string>('')
   const [showPassword, setShowPassword] = useState(false)
+  const [showOldPassword, setShowOldPassword] = useState(false)
   const [showPassword2, setShowPassword2] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [oldPasswordError, setOldPasswordError] = useState<string | null>(null)
+  const [alertBox, setAlertBox] = useState<boolean>(false)
   const [passwordRepeatError, setPasswordRepeatError] = useState<string | null>(
     null
   )
   const router = useRouter()
+  const token = localStorage.getItem('access_token')
+  console.log(token)
 
   useEffect(() => {
     const userString = localStorage.getItem('user')
@@ -50,6 +57,7 @@ export default function Profile() {
 
   const handleToggleVisibility = () => setShowPassword((prev) => !prev)
   const handleToggleVisibility2 = () => setShowPassword2((prev) => !prev)
+  const handleToggleVisibility3 = () => setShowOldPassword((prev) => !prev)
 
   //Funkcija koja otvara meni kada se kliknu tri tacke
   function toggleMenu() {
@@ -78,10 +86,36 @@ export default function Profile() {
     e.preventDefault()
     setPassword('')
     setPasswordRepeat('')
+    setOldPassword('')
+    setPasswordError(null)
+    setPasswordRepeatError(null)
+    setOldPasswordError(null)
   }
 
-  const sendPasswords = () => {
-    console.log('poslato')
+  const sendPasswords = async () => {
+    setSubmitted(true)
+    if (password !== password_repeat) {
+      setPasswordError('sifre moraju da se poklapaju!')
+      setPasswordRepeatError('sifre moraju da se poklapaju')
+      return
+    }
+    const data = {
+      current_password: oldPassword,
+      new_password: password,
+      new_password_confirmation: password_repeat,
+    }
+    try {
+      const res = await changePassword(data)
+      setAlertBox(true)
+      setTimeout(() => {
+        router.push('/login')
+      }, 2000)
+    } catch (error: any) {
+      console.log('unijeli ste netacnu staru sifru', error.message)
+      if (error.message === 'Request failed with status code 400') {
+        setOldPasswordError('unijeli ste pogresnu sifru!')
+      }
+    }
   }
 
   if (user)
@@ -93,16 +127,13 @@ export default function Profile() {
               {user.first_name} {user.last_name}
             </h1>
             <Box className="mt-1 text-xs font-normal">
-              <Link
-                href={user.role === 'librarian' ? '/librarians' : '/students'}
-              >
-                <span className="text-blue">
-                  {user.role === 'librarian'
-                    ? 'Svi bibliotekari'
-                    : 'Svi ucenici'}
-                </span>
-              </Link>
-              <span className="uppercase"> / ID-{user.id} </span>
+              {user.role === 'librarian' && (
+                <Link href={'/librarians'}>
+                  <span className="text-blue">Svi bibliotekari /</span>
+                </Link>
+              )}
+
+              <span className="uppercase"> ID-{user.id} </span>
             </Box>
           </Box>
           <Box className="flex items-center justify-center ml-auto">
@@ -166,7 +197,7 @@ export default function Profile() {
                     }}
                     className="mr-1"
                   />
-                  Izbrisi korisnika
+                  Izbrisi profil
                 </div>
               </div>
             </>
@@ -214,16 +245,16 @@ export default function Profile() {
               </p>
               <div className="flex justify-between">
                 <button
+                  onClick={closeDeleteModal}
+                  className="uppercase w-[124px] bg-white border-1 border-blue text-sm font-semibold py-2 px-4 text-blue rounded hover:cursor-pointer"
+                >
+                  Poništi
+                </button>
+                <button
                   onClick={() => handleDeleteUser(user.id!)}
                   className="uppercase w-[124px] text-sm font-medium py-2 px-4 bg-blue text-white rounded hover:bg-blue-500 transition-colors duration-200 hover:cursor-pointer"
                 >
                   Potvrdi
-                </button>
-                <button
-                  onClick={closeDeleteModal}
-                  className="uppercase w-[124px] bg-blue text-sm font-medium py-2 px-4 text-white rounded hover:cursor-pointer hover:bg-blue-500 transition-colors duration-200"
-                >
-                  Poništi
                 </button>
               </div>
             </div>
@@ -243,11 +274,59 @@ export default function Profile() {
               component="form"
               autoComplete="off"
               className="relative flex flex-col p-6 bg-white rounded-2xl w-[400px] shadow-lg z-10"
-              onSubmit={(e) => e.preventDefault()} // spreči da Chrome vidi submit forme
+              onSubmit={(e) => {
+                sendPasswords()
+                e.preventDefault()
+              }} // spreči da Chrome vidi submit forme
             >
-              <h3 className="mb-4 text-base">Unesite novu šifru</h3>
+              <Box className="flex justify-between">
+                <h3 className="mb-4 text-base">Unesite novu šifru</h3>
+                <CloseIcon
+                  className="hover:cursor-pointer"
+                  onClick={() => {
+                    setResetModal(false)
+                  }}
+                />
+              </Box>
 
-              {/* Prvo polje */}
+              {/* Stara sifra */}
+              <FormControl variant="outlined" fullWidth className="mb-3">
+                <InputLabel
+                  htmlFor="old_pass"
+                  className={
+                    submitted && oldPasswordError ? 'text-red-500' : ''
+                  }
+                >
+                  Unesite staru sifru..
+                </InputLabel>
+                <OutlinedInput
+                  id="old_pass"
+                  name="old_pass"
+                  autoComplete="old-password"
+                  type={showOldPassword ? 'text' : 'password'}
+                  value={oldPassword}
+                  onChange={(e) => {
+                    setOldPassword(e.target.value)
+                    setOldPasswordError(null)
+                  }}
+                  error={submitted && !!oldPasswordError}
+                  endAdornment={
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={handleToggleVisibility3}
+                        edge="end"
+                        aria-label="toggle password visibility"
+                      >
+                        {showOldPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  }
+                />
+
+                <FormHelperText className="text-red-500">
+                  {submitted && oldPasswordError ? oldPasswordError : null}
+                </FormHelperText>
+              </FormControl>
               <FormControl variant="outlined" fullWidth className="mb-3">
                 <InputLabel
                   htmlFor="custom_pass"
@@ -328,20 +407,25 @@ export default function Profile() {
               {/* Dugmad */}
               <Box className="flex justify-between gap-4">
                 <button
+                  type="button"
+                  onClick={handleDeleteFields}
+                  className="uppercase w-[124px] text-sm font-semibold py-2 px-4 bg-white border-1 border-blue text-blue rounded hover:cursor-pointer"
+                >
+                  Poništi
+                </button>
+                <button
                   type="submit"
                   onClick={() => sendPasswords()}
                   className="uppercase w-[124px] text-sm font-medium py-2 px-4 bg-blue text-white rounded hover:bg-blue-500 transition-colors duration-200 hover:cursor-pointer"
                 >
                   Potvrdi
                 </button>
-                <button
-                  type="button"
-                  onClick={handleDeleteFields}
-                  className="uppercase w-[124px] text-sm font-medium py-2 px-4 bg-blue text-white rounded hover:bg-blue-500 transition-colors duration-200 hover:cursor-pointer"
-                >
-                  Poništi
-                </button>
               </Box>
+              {alertBox && (
+                <span className="text-green-500 mt-4 text-sm">
+                  Sifra uspjesno promijenjena!
+                </span>
+              )}
             </Box>
           </Box>
         )}

@@ -24,6 +24,7 @@ import {
   getOverdueBooks,
 } from '@/utils/apiService'
 import { Reservation } from '@/components/ActiveReservationsTable'
+import useRole from '@/hooks/useRole'
 
 export default function Book() {
   const [data, setData] = useState<BookData>()
@@ -62,6 +63,7 @@ export default function Book() {
     images: null as File[] | null,
   })
   const [reservationsData, setReservationsData] = useState<Reservation[]>([])
+  const role = useRole()
 
   useEffect(() => {
     if (path) {
@@ -87,7 +89,7 @@ export default function Book() {
   }, [id])
 
   useEffect(() => {
-    if (id) {
+    if (id && role === 'librarian') {
       console.log(id)
       const loadRentals = async () => {
         const rentals = await getActiveRentals({
@@ -112,13 +114,11 @@ export default function Book() {
 
         setReservationsData(reservation)
       }
-
       loadReservations()
-
       loadOverdue()
       loadRentals()
     }
-  }, [id])
+  }, [id, role])
 
   useEffect(() => {
     setOverdueLength(
@@ -174,7 +174,13 @@ export default function Book() {
     setValue(newValue)
   }
 
-  if (data && rentalData && overdueBooks && reservationsData)
+  if (
+    data &&
+    rentalData &&
+    overdueBooks &&
+    reservationsData &&
+    role === 'librarian'
+  )
     return (
       <div className="py-3 text-xl font-medium overflow-y-hidden">
         <div className="px-4 flex justify-between">
@@ -420,16 +426,16 @@ export default function Book() {
                 </p>
                 <div className="flex justify-between">
                   <button
+                    onClick={closeDeleteModal}
+                    className="uppercase w-[124px] bg-white text-sm font-medium py-2 px-4 border-1 border-blue text-blue rounded hover:cursor-pointer"
+                  >
+                    Poništi
+                  </button>
+                  <button
                     onClick={() => handleDeleteBook(id!)}
                     className="uppercase w-[124px] text-sm font-medium py-2 px-4 bg-blue text-white rounded hover:bg-blue-500 transition-colors duration-200 hover:cursor-pointer"
                   >
                     Potvrdi
-                  </button>
-                  <button
-                    onClick={closeDeleteModal}
-                    className="uppercase w-[124px] bg-blue text-sm font-medium py-2 px-4 text-white rounded hover:cursor-pointer hover:bg-blue-500 transition-colors duration-200"
-                  >
-                    Poništi
                   </button>
                 </div>
               </div>

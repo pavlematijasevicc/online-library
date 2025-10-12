@@ -275,40 +275,51 @@ export default function PublicationArchivedReservations() {
                           Izdato
                         </Button>
                       )}
+                      {row.status === 'cancelled' && (
+                        <Button
+                          variant="outlined"
+                          className="text-sm font-normal px-3 py-2 border-orange-500 text-orange-500 rounded-4xl"
+                        >
+                          Otkazano
+                        </Button>
+                      )}
                     </TableCell>
-                    <TableCell align="right">
-                      <Box
-                        onClick={
-                          openMenu === index
-                            ? () => closeMenu()
-                            : () => toggleMenu(index)
-                        }
-                      >
-                        <MoreVertIcon className="hover:cursor-pointer" />
-                        {openMenu === index && (
-                          <>
-                            <Box
-                              className="fixed inset-0 bg-transparent"
-                              onClick={() => setOpenMenu(null)}
-                            ></Box>
 
-                            <Box className="absolute w-[200px] -ml-50 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
-                              <Link href={`/publication/${row.id}`}>
-                                <Box className="capitalize px-4 py-3 flex items-center">
-                                  <DescriptionOutlinedIcon
-                                    sx={{
-                                      width: '20px',
-                                      height: '20px',
-                                    }}
-                                    className="mr-1"
-                                  />
-                                  Pogledaj detalje
-                                </Box>
-                              </Link>
-                            </Box>
-                          </>
-                        )}
-                      </Box>
+                    <TableCell align="right">
+                      {row.status === 'rented' && (
+                        <Box
+                          onClick={
+                            openMenu === index
+                              ? () => closeMenu()
+                              : () => toggleMenu(index)
+                          }
+                        >
+                          <MoreVertIcon className="hover:cursor-pointer" />
+                          {openMenu === index && (
+                            <>
+                              <Box
+                                className="fixed inset-0 bg-transparent"
+                                onClick={() => setOpenMenu(null)}
+                              ></Box>
+
+                              <Box className="absolute w-[200px] -ml-50 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
+                                <Link href={`/publication/archived/${row.id}`}>
+                                  <Box className="capitalize px-4 py-3 flex items-center">
+                                    <DescriptionOutlinedIcon
+                                      sx={{
+                                        width: '20px',
+                                        height: '20px',
+                                      }}
+                                      className="mr-1"
+                                    />
+                                    Pogledaj detalje
+                                  </Box>
+                                </Link>
+                              </Box>
+                            </>
+                          )}
+                        </Box>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

@@ -12,6 +12,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { deleteUser, viewUser } from '@/utils/apiService'
 import StudentForm from '@/components/StudentForm'
 import EditStudent from '@/components/EditStudent'
+import useRole from '@/hooks/useRole'
 
 export default function StudentPage() {
   const [value, setValue] = useState('1')
@@ -22,6 +23,7 @@ export default function StudentPage() {
   const nameInputRef = useRef<HTMLInputElement>(null)
   const path = usePathname()
   const router = useRouter()
+  const role = useRole()
 
   useEffect(() => {
     if (path) {
@@ -97,10 +99,14 @@ export default function StudentPage() {
               {data.first_name} {data.last_name}
             </h1>
             <div className="mt-1 text-xs font-normal">
-              <Link href={'/students'}>
-                <span className="text-blue">Svi Ucenici</span>
-              </Link>
-              <span> /</span>
+              {role === 'librarian' && (
+                <>
+                  <Link href={'/students'}>
+                    <span className="text-blue">Svi Ucenici</span>
+                  </Link>
+                  <span> /</span>
+                </>
+              )}
               <span className="uppercase text-blue"> ID-{data.id}</span>
             </div>
           </div>
@@ -180,16 +186,18 @@ export default function StudentPage() {
                     },
                   }}
                 />
-                <Tab
-                  label="Evidencija iznajmljivanja"
-                  value="2"
-                  className="p-4 text-sm font-normal ml-4"
-                  sx={{
-                    '&.Mui-selected': {
-                      color: '#3392EA', // boja kada je tab aktivan
-                    },
-                  }}
-                />
+                {role === 'librarian' && (
+                  <Tab
+                    label="Evidencija iznajmljivanja"
+                    value="2"
+                    className="p-4 text-sm font-normal ml-4"
+                    sx={{
+                      '&.Mui-selected': {
+                        color: '#3392EA', // boja kada je tab aktivan
+                      },
+                    }}
+                  />
+                )}
               </TabList>
             </Box>
             <TabPanel value="1">
@@ -199,9 +207,11 @@ export default function StudentPage() {
                 nameInputRef={nameInputRef}
               />
             </TabPanel>
-            <TabPanel value="2">
-              <RecordsStudent data={data} />
-            </TabPanel>
+            {role === 'librarian' && (
+              <TabPanel value="2">
+                <RecordsStudent data={data} />
+              </TabPanel>
+            )}
           </TabContext>
           {showDeleteModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -211,20 +221,20 @@ export default function StudentPage() {
               />
               <div className="z-50 bg-white p-6 rounded-xl shadow-lg w-[320px] relative text-center">
                 <p className="text-gray-800 text-base font-medium mb-6">
-                  Da li ste sigurni da želite da izbrišete knjigu?
+                  Da li ste sigurni da želite da izbrišete ucenika?
                 </p>
                 <div className="flex justify-between">
+                  <button
+                    onClick={closeDeleteModal}
+                    className="uppercase w-[124px] bg-white border-1 border-blue text-sm font-medium py-2 px-4 text-blue rounded hover:cursor-pointer"
+                  >
+                    Poništi
+                  </button>
                   <button
                     onClick={() => handleDeleteStudent(data.id!)}
                     className="uppercase w-[124px] text-sm font-medium py-2 px-4 bg-blue text-white rounded hover:bg-blue-500 transition-colors duration-200 hover:cursor-pointer"
                   >
                     Potvrdi
-                  </button>
-                  <button
-                    onClick={closeDeleteModal}
-                    className="uppercase w-[124px] bg-blue text-sm font-medium py-2 px-4 text-white rounded hover:cursor-pointer hover:bg-blue-500 transition-colors duration-200"
-                  >
-                    Poništi
                   </button>
                 </div>
               </div>

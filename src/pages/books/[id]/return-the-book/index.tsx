@@ -24,6 +24,7 @@ import {
 import ReturnTheBookTable from '@/components/ReturnTheBookTable'
 import { deleteBook, fetchBookById } from '@/utils/apiService'
 import { BookData } from '../../../../../types'
+import useRole from '@/hooks/useRole'
 
 export default function IssuedBook() {
   const [openMenu, setOpenMenu] = useState<boolean>(false)
@@ -36,6 +37,7 @@ export default function IssuedBook() {
   const [data, setData] = useState<BookData>()
   const router = useRouter()
   const path = usePathname()
+  const role = useRole()
 
   useEffect(() => {
     if (path) {
@@ -90,7 +92,7 @@ export default function IssuedBook() {
     }, 0)
   }
 
-  if (path)
+  if (path && role === 'librarian')
     return (
       <div className="py-3 text-xl font-medium overflow-y-hidden">
         <div className="px-4 flex justify-between">

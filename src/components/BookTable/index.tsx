@@ -32,6 +32,7 @@ import HistoryEduOutlinedIcon from '@mui/icons-material/HistoryEduOutlined'
 import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined'
 import EventAvailableIcon from '@mui/icons-material/EventAvailable'
 import AssignmentReturnOutlinedIcon from '@mui/icons-material/AssignmentReturnOutlined'
+import { userAgent } from 'next/server'
 
 interface Data {
   id: number
@@ -52,6 +53,33 @@ interface HeadCell {
   disablePadding: boolean
   label: string
 }
+
+const headCellsStudent: readonly HeadCell[] = [
+  {
+    id: 'name',
+    numeric: false,
+    disablePadding: false,
+    label: 'Naziv Knjige',
+  },
+  {
+    id: 'author',
+    numeric: false,
+    disablePadding: false,
+    label: 'Autor',
+  },
+  {
+    id: 'category',
+    numeric: false,
+    disablePadding: false,
+    label: 'Kategorija',
+  },
+  {
+    id: 'available',
+    numeric: true,
+    disablePadding: false,
+    label: 'Na raspolaganju',
+  },
+]
 
 const headCells: readonly HeadCell[] = [
   {
@@ -114,6 +142,7 @@ interface EnhancedTableProps {
   order: Order
   orderBy: string
   rowCount: number
+  role: string
 }
 
 function EnhancedTableHead(props: EnhancedTableProps) {
@@ -124,6 +153,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
     numSelected,
     rowCount,
     onRequestSort,
+    role,
   } = props
   const createSortHandler =
     (property: keyof Data) => (event: React.MouseEvent<unknown>) => {
@@ -133,37 +163,69 @@ function EnhancedTableHead(props: EnhancedTableProps) {
   return (
     <TableHead sx={{ backgroundColor: '#F5F7FA' }}>
       <TableRow>
-        <TableCell padding="checkbox">
-          <Checkbox
-            indeterminate={numSelected > 0 && numSelected < rowCount}
-            checked={rowCount > 0 && numSelected === rowCount}
-            onChange={onSelectAllClick}
-          />
-        </TableCell>
-        {headCells.map((headCell) => (
-          <TableCell
-            key={headCell.id}
-            align={'left'}
-            padding={headCell.disablePadding ? 'none' : 'normal'}
-            sortDirection={orderBy === headCell.id ? order : false}
-            sx={{
-              fontWeight: headCell.id === 'name' ? 'bold' : 'normal',
-            }}
-          >
-            <TableSortLabel
-              active={orderBy === headCell.id}
-              direction={orderBy === headCell.id ? order : 'asc'}
-              onClick={createSortHandler(headCell.id)}
-            >
-              {headCell.label}
-              {orderBy === headCell.id ? (
-                <Box component="span" sx={visuallyHidden}>
-                  {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
-                </Box>
-              ) : null}
-            </TableSortLabel>
+        {role === 'librarian' && (
+          <TableCell padding="checkbox">
+            <Checkbox
+              indeterminate={numSelected > 0 && numSelected < rowCount}
+              checked={rowCount > 0 && numSelected === rowCount}
+              onChange={onSelectAllClick}
+            />
           </TableCell>
-        ))}
+        )}
+
+        {role === 'librarian'
+          ? headCells.map((headCell) => (
+              <TableCell
+                key={headCell.id}
+                align={'left'}
+                padding={headCell.disablePadding ? 'none' : 'normal'}
+                sortDirection={orderBy === headCell.id ? order : false}
+                sx={{
+                  fontWeight: headCell.id === 'name' ? 'bold' : 'normal',
+                }}
+              >
+                <TableSortLabel
+                  active={orderBy === headCell.id}
+                  direction={orderBy === headCell.id ? order : 'asc'}
+                  onClick={createSortHandler(headCell.id)}
+                >
+                  {headCell.label}
+                  {orderBy === headCell.id ? (
+                    <Box component="span" sx={visuallyHidden}>
+                      {order === 'desc'
+                        ? 'sorted descending'
+                        : 'sorted ascending'}
+                    </Box>
+                  ) : null}
+                </TableSortLabel>
+              </TableCell>
+            ))
+          : headCellsStudent.map((headCell) => (
+              <TableCell
+                key={headCell.id}
+                align={'left'}
+                padding={headCell.disablePadding ? 'none' : 'normal'}
+                sortDirection={orderBy === headCell.id ? order : false}
+                sx={{
+                  fontWeight: headCell.id === 'name' ? 'bold' : 'normal',
+                }}
+              >
+                <TableSortLabel
+                  active={orderBy === headCell.id}
+                  direction={orderBy === headCell.id ? order : 'asc'}
+                  onClick={createSortHandler(headCell.id)}
+                >
+                  {headCell.label}
+                  {orderBy === headCell.id ? (
+                    <Box component="span" sx={visuallyHidden}>
+                      {order === 'desc'
+                        ? 'sorted descending'
+                        : 'sorted ascending'}
+                    </Box>
+                  ) : null}
+                </TableSortLabel>
+              </TableCell>
+            ))}
         <TableCell align="right" padding="normal">
           {/* prazno zaglavlje za dugme */}
         </TableCell>
@@ -199,7 +261,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
         variant="subtitle1"
         component="div"
       >
-        Izbrisi {numSelected} autora
+        Izbrisi {numSelected} knjiga
       </Typography>
 
       <Tooltip title="Izbrisi">
@@ -210,7 +272,12 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
     </Toolbar>
   ) : null
 }
-export default function EnhancedTable() {
+
+type Props = {
+  role: string
+}
+
+export default function EnhancedTable({ role }: Props) {
   const [order, setOrder] = React.useState<Order>('asc')
   const [orderBy, setOrderBy] = React.useState<keyof Data>('name')
   const [selected, setSelected] = React.useState<readonly number[]>([])
@@ -431,7 +498,9 @@ export default function EnhancedTable() {
           />
         </Box>
         <Paper sx={{ width: '100%', mb: 2 }}>
-          <EnhancedTableToolbar numSelected={selected.length} />
+          {role === 'librarian' && (
+            <EnhancedTableToolbar numSelected={selected.length} />
+          )}
           <TableContainer>
             <Table
               sx={{
@@ -446,6 +515,7 @@ export default function EnhancedTable() {
               size="medium"
             >
               <EnhancedTableHead
+                role={role}
                 numSelected={selected.length}
                 order={order}
                 orderBy={orderBy}
@@ -468,17 +538,19 @@ export default function EnhancedTable() {
                       selected={isItemSelected}
                       sx={{ cursor: 'pointer' }}
                     >
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          sx={{ verticalAlign: 'middle' }}
-                          color="primary"
-                          checked={isItemSelected}
-                          onChange={(event) => handleClick(event, row.id)}
-                          inputProps={{
-                            'aria-labelledby': labelId,
-                          }}
-                        />
-                      </TableCell>
+                      {role === 'librarian' && (
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            sx={{ verticalAlign: 'middle' }}
+                            color="primary"
+                            checked={isItemSelected}
+                            onChange={(event) => handleClick(event, row.id)}
+                            inputProps={{
+                              'aria-labelledby': labelId,
+                            }}
+                          />
+                        </TableCell>
+                      )}
 
                       {/* Prva kolona: Slika i ime knjige */}
                       <TableCell
@@ -486,10 +558,11 @@ export default function EnhancedTable() {
                         id={labelId}
                         scope="row"
                         padding="none"
+                        className={role === 'librarian' ? '' : 'ml-4'}
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 2,
+                          gap: 1,
                           py: 2, // standardna visina reda
                           borderBottom: '1px solid rgba(224, 224, 224, 1)', // dodatna sigurnost
                         }}
@@ -507,11 +580,16 @@ export default function EnhancedTable() {
                       <TableCell align="left">{row.author}</TableCell>
                       <TableCell align="left">{row.category}</TableCell>
                       <TableCell align="left">{row.available}</TableCell>
-                      <TableCell align="left">{row.reserved}</TableCell>
-                      <TableCell align="left">{row.issued}</TableCell>
-                      <TableCell align="left">{row.overdue}</TableCell>
-                      <TableCell align="left">{row.total}</TableCell>
-                      <TableCell align="left">
+                      {role === 'librarian' && (
+                        <>
+                          <TableCell align="left">{row.reserved}</TableCell>
+                          <TableCell align="left">{row.issued}</TableCell>
+                          <TableCell align="left">{row.overdue}</TableCell>
+                          <TableCell align="left">{row.total}</TableCell>
+                        </>
+                      )}
+
+                      <TableCell align="right">
                         <div
                           onClick={
                             openMenu === index
@@ -521,7 +599,7 @@ export default function EnhancedTable() {
                         >
                           <MoreVertIcon className="hover:cursor-pointer" />
                         </div>
-                        {openMenu === index && (
+                        {openMenu === index && role === 'librarian' && (
                           <>
                             <div
                               className="fixed inset-0 bg-transparent"
@@ -580,6 +658,25 @@ export default function EnhancedTable() {
                                   <span> Vrati knjigu </span>
                                 </div>
                               </Link>
+                              <Link href={`books/${row.id}/reserve-the-book`}>
+                                <div className="capitalize px-4 py-3 flex items-center hover:cursor-pointer">
+                                  <EventAvailableIcon
+                                    sx={{ width: '18px', height: '18px' }}
+                                    className="mr-1"
+                                  />
+                                  <span> Rezervisi knjigu </span>
+                                </div>
+                              </Link>
+                            </div>
+                          </>
+                        )}
+                        {openMenu === index && role !== 'librarian' && (
+                          <>
+                            <div
+                              className="fixed inset-0 bg-transparent"
+                              onClick={() => setOpenMenu(null)}
+                            ></div>
+                            <div className="absolute w-[320px] -ml-55 py-2 bg-white items-start text-grey-text text-sm font-normal border-1 border-border z-99 text-left">
                               <Link href={`books/${row.id}/reserve-the-book`}>
                                 <div className="capitalize px-4 py-3 flex items-center hover:cursor-pointer">
                                   <EventAvailableIcon

@@ -49,9 +49,9 @@ export default function Bindings() {
         const options = await fetchAllBookOptions()
         console.log('Fetched bindings:', options.bindings)
         const cleanedOptions = options.bindings.map(
-          (b: string, index: number) => ({
+          (b: { value: string; label: string }, index: number) => ({
             id: index,
-            name: b,
+            name: b.label,
           })
         )
         setBinding(cleanedOptions)
